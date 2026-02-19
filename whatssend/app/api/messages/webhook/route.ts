@@ -252,6 +252,7 @@ async function handleBotReply(
     }
 
     const botResponse = await processBotMessage(
+      supabase,
       workspaceId,
       contactData,
       formattedHistory,

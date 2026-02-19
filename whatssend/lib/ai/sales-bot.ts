@@ -1,5 +1,5 @@
 import { OpenAI } from 'openai'
-import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
 import { Contact } from '@/types/contact'
 import { DEFAULT_SYSTEM_PROMPT } from '@/lib/ai/bot-constants'
 
@@ -7,7 +7,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 })
 
-// Re-export for backward compatibility with any existing imports
+// Re-export for backward compatibility
 export { DEFAULT_SYSTEM_PROMPT }
 
 interface BotResponse {
@@ -26,47 +26,57 @@ interface BotResponse {
 
 /**
  * Obtiene contenido de texto de archivos RAG activos del workspace desde Supabase Storage.
- * Solo lee archivos .txt y .md (los PDFs/Excel requieren parser adicional).
+ * Acepta un cliente Supabase ya autenticado para funcionar en contextos sin sesión (webhook).
  */
-async function getRagContent(workspaceId: string): Promise<{ general: string; offers: string }> {
+async function getRagContent(
+  supabase: SupabaseClient,
+  workspaceId: string
+): Promise<{ general: string; offers: string }> {
   try {
-    const supabase = await createClient()
-    const { data: files } = await supabase
+    const { data: files, error } = await supabase
       .from('bot_files')
       .select('name, storage_path, file_type')
       .eq('workspace_id', workspaceId)
       .eq('active', true)
 
-    if (!files || files.length === 0) return { general: '', offers: '' }
+    if (error) {
+      console.warn('[SalesBot] getRagContent error:', error.message)
+      return { general: '', offers: '' }
+    }
+
+    if (!files || files.length === 0) {
+      console.log('[SalesBot] No bot_files found for workspace:', workspaceId)
+      return { general: 'Sin archivos de conocimiento activos.', offers: 'Sin archivos de ofertas activos.' }
+    }
+
+    console.log('[SalesBot] Found', files.length, 'bot_files')
 
     const generalChunks: string[] = []
     const offerChunks: string[] = []
 
     for (const file of files) {
-      // Solo leer archivos de texto (expansible a PDF con parser futuro)
+      const isOffer = file.name.startsWith('[OFERTA]')
+      const cleanName = file.name.replace('[OFERTA]', '').trim()
+
+      // Solo descargar archivos de texto (txt/md). PDFs y spreadsheets solo aportan nombre.
       if (file.file_type !== 'text') {
-        // Para archivos no-texto, al menos informamos el nombre al bot
-        const isOffer = file.name.startsWith('[OFERTA]')
-        const cleanName = file.name.replace('[OFERTA]', '').trim()
-        if (isOffer) {
-          offerChunks.push(`[Archivo de oferta disponible: ${cleanName}]`)
-        } else {
-          generalChunks.push(`[Documento disponible: ${cleanName}]`)
-        }
+        const note = `[Archivo disponible: ${cleanName} — tipo: ${file.file_type}]`
+        if (isOffer) offerChunks.push(note)
+        else generalChunks.push(note)
         continue
       }
 
-      // Descargar contenido del archivo de texto
-      const { data: fileData } = await supabase.storage
+      const { data: fileData, error: dlError } = await supabase.storage
         .from('workspaces')
         .download(file.storage_path)
 
-      if (!fileData) continue
+      if (dlError || !fileData) {
+        console.warn('[SalesBot] Could not download file:', file.name, dlError?.message)
+        continue
+      }
 
       const content = await fileData.text()
-      const isOffer = file.name.startsWith('[OFERTA]')
-      const cleanName = file.name.replace('[OFERTA]', '').trim()
-      const snippet = content.slice(0, 3000) // máx 3k chars por archivo
+      const snippet = content.slice(0, 4000) // máx 4k chars por archivo
 
       if (isOffer) {
         offerChunks.push(`--- ${cleanName} ---\n${snippet}`)
@@ -86,21 +96,33 @@ async function getRagContent(workspaceId: string): Promise<{ general: string; of
 }
 
 /**
- * Obtiene promociones activas desde la tabla promotions (server-side).
+ * Obtiene promociones activas desde la tabla promotions.
+ * Acepta un cliente Supabase ya autenticado.
  */
-async function getPromotionsContext(workspaceId: string): Promise<string> {
+async function getPromotionsContext(
+  supabase: SupabaseClient,
+  workspaceId: string
+): Promise<string> {
   try {
-    const supabase = await createClient()
-    const { data: promotions } = await supabase
+    const { data: promotions, error } = await supabase
       .from('promotions')
-      .select('*')
+      .select('name, speed, price, description, additional_services')
       .eq('workspace_id', workspaceId)
       .eq('is_active', true)
 
-    if (!promotions || promotions.length === 0) return 'Sin promociones activas en este momento.'
+    if (error) {
+      console.warn('[SalesBot] getPromotions error:', error.message)
+      return ''
+    }
 
-    return promotions.map((p: Record<string, unknown>) =>
-      `- ${p.name}: ${p.speed} a $${p.price} (${p.description}. Incluye: ${Array.isArray(p.additional_services) ? p.additional_services.join(', ') : ''})`
+    if (!promotions || promotions.length === 0) {
+      return 'Sin promociones activas en este momento.'
+    }
+
+    console.log('[SalesBot] Found', promotions.length, 'promotions')
+
+    return promotions.map((p) =>
+      `- ${p.name}: ${p.speed ?? ''} a $${p.price ?? '?'} (${p.description ?? ''}. Incluye: ${Array.isArray(p.additional_services) ? p.additional_services.join(', ') : ''})`
     ).join('\n')
   } catch (err) {
     console.warn('[SalesBot] Promotions fetch error:', err)
@@ -108,7 +130,17 @@ async function getPromotionsContext(workspaceId: string): Promise<string> {
   }
 }
 
+/**
+ * Procesa un mensaje entrante con IA.
+ * @param supabase - Cliente Supabase autenticado (service role desde el webhook)
+ * @param workspaceId - ID del workspace
+ * @param contact - Datos del contacto
+ * @param messageHistory - Historial de mensajes para contexto
+ * @param customInstructions - Instrucciones adicionales del supervisor
+ * @param systemPromptOverride - Prompt personalizado del workspace (si existe)
+ */
 export async function processBotMessage(
+  supabase: SupabaseClient,
   workspaceId: string,
   contact: Contact,
   messageHistory: { role: 'user' | 'assistant', content: string }[],
@@ -121,13 +153,13 @@ export async function processBotMessage(
       return null
     }
 
-    // 1. Cargar contexto en paralelo
+    // 1. Cargar contexto en paralelo (usando el supabase pasado como param)
     const [ragContent, promotionsContext] = await Promise.all([
-      getRagContent(workspaceId),
-      getPromotionsContext(workspaceId),
+      getRagContent(supabase, workspaceId),
+      getPromotionsContext(supabase, workspaceId),
     ])
 
-    console.log('[SalesBot] System prompt source:', systemPromptOverride ? 'db' : 'default')
+    console.log('[SalesBot] System prompt source:', systemPromptOverride ? 'custom (db)' : 'default')
     console.log('[SalesBot] RAG general chars:', ragContent.general.length)
     console.log('[SalesBot] RAG offers chars:', ragContent.offers.length)
     console.log('[SalesBot] Promotions context chars:', promotionsContext.length)
@@ -135,14 +167,19 @@ export async function processBotMessage(
     // 2. Construir prompt del sistema
     const basePrompt = systemPromptOverride || DEFAULT_SYSTEM_PROMPT
 
+    // Si hay archivos de ofertas, úsalos como fuente de verdad. Si no, usa las promociones de DB.
+    const offersSection = ragContent.offers && ragContent.offers !== 'Sin archivos de ofertas activos.'
+      ? ragContent.offers
+      : promotionsContext
+
     const systemPrompt = `${basePrompt}
 
 ${customInstructions ? `INSTRUCCIONES ADICIONALES DEL SUPERVISOR:\n${customInstructions}\n` : ''}
 BASE DE CONOCIMIENTO GENERAL:
 ${ragContent.general}
 
-ARCHIVOS DE OFERTAS (usar como fuente de verdad para planes y precios):
-${ragContent.offers || promotionsContext}
+PLANES Y OFERTAS DISPONIBLES (usa como única fuente de verdad para precios y planes):
+${offersSection}
 
 DATOS ACTUALES DEL CLIENTE:
 - Nombre: ${contact.name || 'Desconocido'}
@@ -153,7 +190,7 @@ DATOS ACTUALES DEL CLIENTE:
 
 FORMATO DE RESPUESTA (JSON estricto):
 {
-  "message": "Texto de la respuesta para el cliente (solo texto plano con emojis, sin markdown)",
+  "message": "Texto de la respuesta para el cliente (texto plano con emojis, sin markdown)",
   "extracted": {
     "rut": null,
     "address": null,
@@ -177,14 +214,14 @@ IMPORTANTE: "extracted" debe contener SOLO los datos NUEVOS que el cliente acaba
       ],
       response_format: { type: 'json_object' },
       temperature: 0.7,
-      max_tokens: 500,
+      max_tokens: 600,
     })
 
     const content = response.choices[0].message.content
     if (!content) return null
 
     const parsed = JSON.parse(content) as BotResponse
-    console.log('[SalesBot] Response OK. Intent:', parsed.intent)
+    console.log('[SalesBot] Response OK. Intent:', parsed.intent, '| Msg preview:', parsed.message.slice(0, 60))
     return parsed
 
   } catch (error) {
