@@ -161,3 +161,64 @@ export function useSendMessage() {
     },
   })
 }
+
+/**
+ * Marca todos los mensajes inbound de un contacto como leídos.
+ */
+export function useMarkMessagesRead() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      contactId,
+      workspaceId,
+    }: {
+      contactId: string
+      workspaceId: string
+    }) => {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('messages')
+        .update({ status: 'read' })
+        .eq('contact_id', contactId)
+        .eq('workspace_id', workspaceId)
+        .eq('direction', 'inbound')
+        .neq('status', 'read')
+
+      if (error) throw error
+    },
+    onSuccess: (_data, { contactId, workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: ['messages', contactId] })
+      queryClient.invalidateQueries({ queryKey: ['conversations', workspaceId] })
+    },
+  })
+}
+
+/**
+ * Elimina todos los mensajes de una conversación ("borrar chat").
+ */
+export function useDeleteConversation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      contactId,
+      workspaceId,
+    }: {
+      contactId: string
+      workspaceId: string
+    }) => {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('contact_id', contactId)
+        .eq('workspace_id', workspaceId)
+
+      if (error) throw error
+    },
+    onSuccess: (_data, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: ['conversations', workspaceId] })
+    },
+  })
+}

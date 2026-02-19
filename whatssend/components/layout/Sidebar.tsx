@@ -4,6 +4,8 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/useAppStore'
+import { useWorkspace } from '@/hooks/useWorkspace'
+import { useConversations } from '@/hooks/useConversations'
 import {
   LayoutDashboard,
   MessageSquare,
@@ -13,7 +15,6 @@ import {
   Bot,
   BarChart3,
   Settings,
-  LogOut,
   ChevronLeft,
   ChevronRight,
   Kanban,
@@ -23,9 +24,10 @@ import { Separator } from '@/components/ui/separator'
 
 const navItems = [
   { href: '/', label: 'Panel', icon: LayoutDashboard },
-  { href: '/inbox', label: 'Bandeja', icon: MessageSquare },
+  { href: '/inbox', label: 'Bandeja', icon: MessageSquare, badge: true },
   { href: '/pipeline', label: 'Ventas', icon: Kanban },
   { href: '/campaigns', label: 'Campañas', icon: Megaphone },
+  { href: '/contacts', label: 'Contactos', icon: Users },
   { href: '/templates', label: 'Plantillas', icon: FileText },
   { href: '/bot', label: 'Bot', icon: Bot },
   { href: '/analytics', label: 'Analíticas', icon: BarChart3 },
@@ -38,6 +40,11 @@ const bottomItems = [
 export function Sidebar() {
   const pathname = usePathname()
   const { sidebarExpanded, setSidebarExpanded } = useAppStore()
+  const { workspaceId } = useWorkspace()
+  const { data: conversations = [] } = useConversations(workspaceId)
+
+  // Contar mensajes no leídos totales
+  const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0)
 
   return (
     <aside
@@ -67,24 +74,33 @@ export function Sidebar() {
       <nav className="flex-1 flex flex-col py-4 px-3 space-y-1 overflow-hidden">
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+          const showBadge = item.badge && totalUnread > 0
           return (
             <Tooltip key={item.href} delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link
                   href={item.href}
                   className={cn(
-                    'flex items-center h-10 px-3 rounded-lg transition-all duration-200 group',
+                    'flex items-center h-10 px-3 rounded-lg transition-all duration-200 group relative',
                     isActive
                       ? 'bg-emerald-500/10 text-emerald-400'
                       : 'text-[#64748B] hover:text-white hover:bg-[#1A1D27]'
                   )}
                 >
-                  <item.icon
-                    className={cn(
-                      'w-5 h-5 flex-shrink-0 transition-colors',
-                      isActive ? 'text-emerald-400' : 'text-[#64748B] group-hover:text-white'
+                  <div className="relative flex-shrink-0">
+                    <item.icon
+                      className={cn(
+                        'w-5 h-5 transition-colors',
+                        isActive ? 'text-emerald-400' : 'text-[#64748B] group-hover:text-white'
+                      )}
+                    />
+                    {/* Badge pequeño cuando sidebar está colapsado */}
+                    {showBadge && !sidebarExpanded && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center shadow-sm shadow-emerald-500/30">
+                        {totalUnread > 9 ? '9+' : totalUnread}
+                      </span>
                     )}
-                  />
+                  </div>
                   <span
                     className={cn(
                       'ml-3 text-sm font-medium whitespace-nowrap transition-opacity duration-200',
@@ -93,6 +109,12 @@ export function Sidebar() {
                   >
                     {item.label}
                   </span>
+                  {/* Badge grande cuando sidebar está expandido */}
+                  {sidebarExpanded && showBadge && (
+                    <span className="ml-auto min-w-[20px] h-5 px-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm shadow-emerald-500/30">
+                      {totalUnread > 9 ? '9+' : totalUnread}
+                    </span>
+                  )}
                   {isActive && (
                     <div className="absolute left-0 w-[3px] h-6 bg-emerald-400 rounded-r-full" />
                   )}
@@ -100,7 +122,7 @@ export function Sidebar() {
               </TooltipTrigger>
               {!sidebarExpanded && (
                 <TooltipContent side="right" className="bg-[#1A1D27] text-white border-[#2A2F45]">
-                  {item.label}
+                  {item.label}{showBadge ? ` (${totalUnread})` : ''}
                 </TooltipContent>
               )}
             </Tooltip>

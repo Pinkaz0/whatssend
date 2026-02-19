@@ -1,6 +1,6 @@
 export type ContactStatus = 'new' | 'contacted' | 'responded' | 'converted' | 'lost'
 
-export type ContactSource = 'excel' | 'sheets' | 'manual'
+export type ContactSource = 'excel' | 'sheets' | 'manual' | 'inbound'
 
 export interface Contact {
   id: string

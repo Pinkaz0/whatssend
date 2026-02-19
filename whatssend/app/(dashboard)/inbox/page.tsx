@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useWorkspace } from '@/hooks/useWorkspace'
 import { useInboxStore } from '@/stores/useInboxStore'
 import { useConversations } from '@/hooks/useConversations'
-import { useMessages, useSendMessage } from '@/hooks/useMessages'
+import { useMessages, useSendMessage, useMarkMessagesRead, useDeleteConversation } from '@/hooks/useMessages'
 import { ChatList } from '@/components/inbox/ChatList'
 import { ChatWindow } from '@/components/inbox/ChatWindow'
 import { ContactHeader } from '@/components/inbox/ContactHeader'
@@ -36,6 +36,8 @@ export default function InboxPage() {
   } = useMessages(selectedContactId, workspaceId)
 
   const sendMessage = useSendMessage()
+  const markRead = useMarkMessagesRead()
+  const deleteConversation = useDeleteConversation()
 
   // Encontrar la conversación seleccionada
   const selectedConversation = conversations.find(
@@ -59,6 +61,18 @@ export default function InboxPage() {
 
   const handleSelectContact = (contactId: string) => {
     setSelectedContactId(contactId)
+    // Marcar mensajes como leídos al abrir el chat
+    if (workspaceId) {
+      markRead.mutate({ contactId, workspaceId })
+    }
+  }
+
+  const handleDeleteConversation = async () => {
+    if (!selectedContactId || !workspaceId) return
+    await deleteConversation.mutateAsync({ contactId: selectedContactId, workspaceId })
+    setSelectedContactId(null)
+    setShowContactInfo(false)
+    toast.success('Conversación eliminada')
   }
 
   const handleBack = () => {
@@ -136,8 +150,10 @@ export default function InboxPage() {
           <ContactInfo
             conversation={selectedConversation}
             onClose={() => setShowContactInfo(false)}
+            onDeleteConversation={handleDeleteConversation}
           />
         )}
+
       </div>
     </div>
   )
