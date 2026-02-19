@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createUltraMsgClient } from '@/lib/ultramsg/client'
 
 /**
  * POST /api/campaigns/send
- * Envía los mensajes de una campaña de forma secuencial.
- * En producción esto debería usar QStash o background jobs.
+ *
+ * Si QSTASH_TOKEN está definido (producción):
+ *   - Encola cada campaign_contact en QStash con flow control (1 msg/seg)
+ *   - Responde inmediatamente con { queued: N }
+ *
+ * Si no hay QSTASH_TOKEN (desarrollo local):
+ *   - Ejecuta el loop síncrono original como fallback
  */
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +37,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Campaña no encontrada' }, { status: 404 })
     }
 
-    // Normalizar: relación puede venir como objeto o array (según Supabase/PostgREST)
     const rawWorkspace = campaign.workspaces
     const workspace = (Array.isArray(rawWorkspace) ? rawWorkspace[0] : rawWorkspace) as {
       owner_id: string
@@ -52,61 +55,75 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 2. Marcar campaña como 'sending'
-    await supabase
-      .from('campaigns')
-      .update({ status: 'sending' })
-      .eq('id', campaignId)
-
-    // 3. Obtener contactos pendientes
+    // 2. Obtener contactos pendientes
     const { data: campaignContacts } = await supabase
       .from('campaign_contacts')
       .select('id, contact_id, contacts(phone, name)')
       .eq('campaign_id', campaignId)
       .eq('status', 'pending')
 
-    console.log('[Campaign Send] Pendientes:', campaignContacts?.length ?? 0, 'campaignId:', campaignId)
-
     if (!campaignContacts || campaignContacts.length === 0) {
       await supabase.from('campaigns').update({ status: 'completed' }).eq('id', campaignId)
-      console.log('[Campaign Send] Sin contactos pendientes — campaña marcada completed')
-      return NextResponse.json({ success: true, sent: 0, failed: 0, message: 'No hay contactos pendientes en esta campaña.' })
+      return NextResponse.json({ success: true, sent: 0, failed: 0, message: 'No hay contactos pendientes.' })
     }
 
-    // 4. Inicializar UltraMsg client
-    const ultramsg = createUltraMsgClient(workspace.ultramsg_instance_id, workspace.ultramsg_token)
-    console.log('[Campaign Send] UltraMsg client OK, instance:', workspace.ultramsg_instance_id?.slice(0, 8) + '...')
+    // 3. Marcar como running
+    await supabase.from('campaigns').update({ status: 'running' }).eq('id', campaignId)
+
+    const qstashToken = process.env.QSTASH_TOKEN
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+
+    // ── MODO PRODUCCIÓN: encolar en QStash ──────────────────────────────────
+    if (qstashToken && appUrl) {
+      const { Client } = await import('@upstash/qstash')
+      const qstash = new Client({ token: qstashToken })
+
+      const workerUrl = `${appUrl}/api/campaigns/worker`
+
+      await Promise.all(
+        campaignContacts.map((cc) =>
+          qstash.publishJSON({
+            url: workerUrl,
+            body: {
+              campaignContactId: cc.id,
+              campaignId,
+            },
+            flowControl: {
+              key: `campaign-${campaignId}`,
+              ratePerSecond: 1,
+            },
+          })
+        )
+      )
+
+      console.log(`[Campaign Send] Encolados ${campaignContacts.length} mensajes en QStash para campaign ${campaignId}`)
+      return NextResponse.json({ success: true, queued: campaignContacts.length })
+    }
+
+    // ── MODO DESARROLLO: loop síncrono (fallback sin QStash) ─────────────────
+    console.log('[Campaign Send] Modo dev — loop síncrono (sin QStash)')
+    const { createUltraMsgClient } = await import('@/lib/ultramsg/client')
+    const ultramsg = createUltraMsgClient(workspace.ultramsg_instance_id!, workspace.ultramsg_token!)
 
     let sentCount = 0
     let failedCount = 0
     const errors: string[] = []
 
-    // 5. Enviar secuencialmente con delay para evitar throttling
     for (const cc of campaignContacts) {
       const contact = cc.contacts as unknown as { phone: string; name: string | null }
-      if (!contact?.phone) {
-        console.warn('[Campaign Send] Contacto sin teléfono, contact_id:', cc.contact_id)
-        failedCount++
-        errors.push(`Contacto sin teléfono`)
-        continue
-      }
+      if (!contact?.phone) { failedCount++; continue }
 
-      // Personalizar mensaje
       let messageBody = campaign.message_body || ''
       messageBody = messageBody.replace(/\{\{nombre\}\}/gi, contact.name || '')
       messageBody = messageBody.replace(/\{\{name\}\}/gi, contact.name || '')
       messageBody = messageBody.replace(/\{\{telefono\}\}/gi, contact.phone || '')
       messageBody = messageBody.replace(/\{\{phone\}\}/gi, contact.phone || '')
 
-      console.log('[Campaign Send] Enviando a', contact.phone, '...')
       const result = await ultramsg.sendMessage(contact.phone, messageBody)
 
       if (result.ok) {
-        await supabase
-          .from('campaign_contacts')
-          .update({ status: 'sent', sent_at: new Date().toISOString() })
-          .eq('id', cc.id)
-
+        await supabase.from('campaign_contacts')
+          .update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', cc.id)
         await supabase.from('messages').insert({
           workspace_id: campaign.workspace_id,
           contact_id: cc.contact_id,
@@ -114,39 +131,24 @@ export async function POST(request: NextRequest) {
           direction: 'outbound',
           body: messageBody,
           status: 'sent',
-          ultramsg_message_id: result.data.id || null,
+          ultramsg_message_id: result.data?.id || null,
           sent_at: new Date().toISOString(),
         })
-
         sentCount++
-        console.log('[Campaign Send] OK enviado a', contact.phone)
       } else {
-        await supabase
-          .from('campaign_contacts')
-          .update({ status: 'failed' })
-          .eq('id', cc.id)
+        await supabase.from('campaign_contacts').update({ status: 'failed' }).eq('id', cc.id)
         failedCount++
-        const errMsg = result.error || 'Error desconocido'
-        errors.push(`${contact.phone}: ${errMsg}`)
-        console.error('[Campaign Send] Fallo UltraMsg para', contact.phone, '—', errMsg)
+        errors.push(`${contact.phone}: ${result.error || 'Error'}`)
       }
 
       await new Promise(resolve => setTimeout(resolve, 1500))
     }
 
-    // 6. Marcar campaña como completada
-    await supabase
-      .from('campaigns')
-      .update({ status: 'completed', sent_at: new Date().toISOString() })
-      .eq('id', campaignId)
+    await supabase.from('campaigns')
+      .update({ status: 'completed' }).eq('id', campaignId)
 
-    console.log('[Campaign Send] Fin — sent:', sentCount, 'failed:', failedCount, errors.length ? 'errores:' : '', errors)
-    return NextResponse.json({
-      success: true,
-      sent: sentCount,
-      failed: failedCount,
-      ...(errors.length > 0 && { errors }),
-    })
+    return NextResponse.json({ success: true, sent: sentCount, failed: failedCount, ...(errors.length > 0 && { errors }) })
+
   } catch (err) {
     console.error('[Campaign Send] Error:', err)
     return NextResponse.json({ error: 'Error interno' }, { status: 500 })

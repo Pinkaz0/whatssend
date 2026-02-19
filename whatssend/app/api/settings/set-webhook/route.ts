@@ -4,8 +4,8 @@ import { createUltraMsgClient } from '@/lib/ultramsg/client'
 
 /**
  * POST /api/settings/set-webhook
- * Configura en UltraMsg la URL del webhook y activa "message received".
- * Así UltraMsg enviará POST a nuestra URL cuando llegue un mensaje.
+ * Construye automáticamente la URL del webhook con ?workspace_id=
+ * y la registra en UltraMsg. No acepta webhookUrl del body.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -13,13 +13,6 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
-    const body = await request.json()
-    const { webhookUrl } = body as { webhookUrl: string }
-
-    if (!webhookUrl || typeof webhookUrl !== 'string' || !webhookUrl.startsWith('http')) {
-      return NextResponse.json({ error: 'URL de webhook no válida' }, { status: 400 })
     }
 
     const { data: workspace } = await supabase
@@ -36,11 +29,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Construir URL única por workspace usando NEXT_PUBLIC_APP_URL (Vercel)
+    // o el origin del request como fallback (desarrollo)
+    const appBase =
+      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ||
+      `${request.nextUrl.protocol}//${request.nextUrl.host}`
+
+    const webhookUrl = `${appBase}/api/messages/webhook?workspace_id=${workspace.id}`
+
     const ultramsg = createUltraMsgClient(workspace.ultramsg_instance_id, workspace.ultramsg_token)
-    const result = await ultramsg.setWebhook(webhookUrl.trim())
+    const result = await ultramsg.setWebhook(webhookUrl)
 
     if (result.ok) {
-      return NextResponse.json({ success: true, message: 'Webhook configurado en UltraMsg (recibir mensajes activado).' })
+      return NextResponse.json({
+        success: true,
+        webhookUrl,
+        message: 'Webhook configurado en UltraMsg correctamente.',
+      })
     }
     return NextResponse.json({ error: result.error }, { status: 400 })
   } catch (err) {

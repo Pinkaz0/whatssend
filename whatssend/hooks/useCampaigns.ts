@@ -180,6 +180,7 @@ export function useResetCampaign() {
 
 /**
  * Elimina una campaña (y sus campaign_contacts por CASCADE).
+ * Primero desvincula los mensajes asociados para evitar FK 409.
  */
 export function useDeleteCampaign() {
   const queryClient = useQueryClient()
@@ -187,8 +188,18 @@ export function useDeleteCampaign() {
   return useMutation({
     mutationFn: async (campaignId: string) => {
       const supabase = createClient()
+
+      // 1. Desvincular mensajes: messages.campaign_id no tiene ON DELETE CASCADE
+      const { error: msgError } = await supabase
+        .from('messages')
+        .update({ campaign_id: null })
+        .eq('campaign_id', campaignId)
+      if (msgError) throw msgError
+
+      // 2. Ahora sí eliminar la campaña (campaign_contacts se borra por CASCADE)
       const { error } = await supabase.from('campaigns').delete().eq('id', campaignId)
       if (error) throw error
+
       return { ok: true }
     },
     onSuccess: () => {
