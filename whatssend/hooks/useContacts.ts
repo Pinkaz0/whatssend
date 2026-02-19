@@ -130,20 +130,17 @@ export function useImportContacts() {
       })
       
       const contactsToInsert = Array.from(uniqueNewContacts.values())
-      
-      if (contactsToInsert.length === 0) return []
 
-      // 2. Insert only new unique contacts
+      // 2. Insert only new unique contacts (skip if all already exist)
       if (contactsToInsert.length > 0) {
         const { error } = await supabase
           .from('contacts')
           .insert(contactsToInsert)
-      
+
         if (error) throw error
       }
 
       // 3. Return ALL IDs (new + existing) for the campaign
-      // We need to fetch IDs for all phones we processed
       const { data: allContacts, error: fetchError } = await supabase
         .from('contacts')
         .select('id, phone')
@@ -151,9 +148,8 @@ export function useImportContacts() {
         .in('phone', phones)
 
       if (fetchError) throw fetchError
-      
-      // Return array of objects consistent with previous signature, but containing all matching contacts
-      return allContacts.map(c => ({ id: c.id, phone: c.phone }))
+
+      return (allContacts || []).map(c => ({ id: c.id, phone: c.phone }))
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contacts'] })
