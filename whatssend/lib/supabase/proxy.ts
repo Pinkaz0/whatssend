@@ -18,7 +18,11 @@ export async function updateSession(request: NextRequest) {
           )
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options as Parameters<typeof supabaseResponse.cookies.set>[2])
+            supabaseResponse.cookies.set(
+              name,
+              value,
+              options as Parameters<typeof supabaseResponse.cookies.set>[2]
+            )
           )
         },
       },
@@ -34,15 +38,17 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith(path)
   )
 
+  // Sin sesión y ruta protegida → login
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
+  // Con sesión y en ruta de auth → inbox (no a '/' que no existe)
   if (user && isPublicPath) {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/inbox'
     return NextResponse.redirect(url)
   }
 
