@@ -90,7 +90,9 @@ export async function POST(request: NextRequest) {
             },
             flowControl: {
               key: `campaign-${campaignId}`,
-              ratePerSecond: 1,
+              rate: 1,
+              period: '1s',
+              parallelism: 1,
             },
           })
         )
