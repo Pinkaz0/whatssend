@@ -23,7 +23,7 @@ interface BotRule {
   id: string
   keyword: string
   response: string
-  active: boolean
+  is_active: boolean
 }
 
 interface BotFilesSectionProps {
@@ -255,7 +255,7 @@ export default function BotPage() {
         workspace_id: workspaceId,
         keyword: newKeyword.trim().toLowerCase(),
         response: newResponse.trim(),
-        active: true,
+        is_active: true,
       })
       if (error) throw error
       setNewKeyword('')
@@ -282,8 +282,8 @@ export default function BotPage() {
 
   const handleToggleRule = async (ruleId: string, active: boolean) => {
     const supabase = createClient()
-    await supabase.from('bot_rules').update({ active }).eq('id', ruleId)
-    setRules(prev => prev.map(r => r.id === ruleId ? { ...r, active } : r))
+    await supabase.from('bot_rules').update({ is_active: active }).eq('id', ruleId)
+    setRules(prev => prev.map(r => r.id === ruleId ? { ...r, is_active: active } : r))
   }
 
   if (wsLoading) {
@@ -454,7 +454,7 @@ export default function BotPage() {
                                 {rules.map(rule => (
                                     <div key={rule.id} className="flex items-center gap-4 p-3 bg-[#0F1117] rounded-lg border border-[#1E2235] hover:border-[#2A2F45] transition-colors">
                                         <Switch
-                                            checked={rule.active}
+                                            checked={rule.is_active}
                                             onCheckedChange={v => handleToggleRule(rule.id, v)}
                                             className="data-[state=checked]:bg-emerald-500 scale-75"
                                         />
@@ -504,7 +504,7 @@ export default function BotPage() {
             <div>
                 <h3 className="text-white font-medium text-sm mb-1">Estado del Sistema</h3>
                 <div className="flex items-center gap-2 text-xs text-[#94A3B8]">
-                    <span>Reglas: {rules.filter(r => r.active).length} activas</span>
+                    <span>Reglas: {rules.filter(r => r.is_active).length} activas</span>
                     <span>•</span>
                     <span>Prompt: {systemPrompt?.length || 0} chars</span>
                 </div>

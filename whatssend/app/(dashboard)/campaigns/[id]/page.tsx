@@ -101,6 +101,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const statusColors: Record<string, string> = {
     draft: 'bg-gray-500/20 text-gray-400',
     sending: 'bg-yellow-500/20 text-yellow-400',
+    running: 'bg-yellow-500/20 text-yellow-400',
     completed: 'bg-emerald-500/20 text-emerald-400',
     failed: 'bg-red-500/20 text-red-400',
   }
@@ -121,7 +122,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             {campaign.status}
           </Badge>
         </div>
-        {(campaign.status === 'draft' || campaign.status === 'completed' || campaign.status === 'failed') && (
+        {(campaign.status === 'draft' || campaign.status === 'completed' || campaign.status === 'failed' || campaign.status === 'running') && (
           <div className="flex items-center gap-2">
             {campaign.status === 'draft' && (
               <Button
@@ -138,7 +139,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 Enviar Campaña
               </Button>
             )}
-            {(campaign.status === 'completed' || campaign.status === 'failed') && (
+            {(campaign.status === 'completed' || campaign.status === 'failed' || campaign.status === 'running') && (
               <Button
                 onClick={async () => {
                   try {

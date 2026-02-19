@@ -59,14 +59,14 @@ export function useAnalytics(workspaceId: string | null) {
           supabase.from('campaigns').select('id').eq('workspace_id', workspaceId)
         ),
         safeQuery(() =>
-          supabase.from('bot_rules').select('id, active').eq('workspace_id', workspaceId)
+          supabase.from('bot_rules').select('id, is_active').eq('workspace_id', workspaceId)
         ),
       ])
 
       const contacts = (contactsRaw || []) as { id: string; status: string; created_at: string }[]
       const messages = (messagesRaw || []) as { id: string; direction: string; created_at: string }[]
       const campaigns = (campaignsRaw || []) as { id: string }[]
-      const botRules = (botRulesRaw || []) as { id: string; active: boolean }[]
+      const botRules = (botRulesRaw || []) as { id: string; is_active: boolean }[]
 
       // Contacts by status
       const statusCounts: Record<string, number> = {}
@@ -121,7 +121,7 @@ export function useAnalytics(workspaceId: string | null) {
         inboundMessages: inbound,
         outboundMessages: outbound,
         totalCampaigns: campaigns.length,
-        activeBotRules: botRules.filter((r) => r.active).length,
+        activeBotRules: botRules.filter((r) => r.is_active).length,
         contactsByStatus,
         messagesByDay,
         contactGrowth,
