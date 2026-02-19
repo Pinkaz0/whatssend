@@ -34,16 +34,14 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const publicPaths = ['/login', '/register']
-  const publicApiPaths = ['/api/messages/webhook']
   const isPublicPath = publicPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   )
-  const isPublicApi = publicApiPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  )
 
-  // Webhook y APIs públicas: no redirigir (UltraMsg no envía cookies)
-  if (isPublicApi) return supabaseResponse
+  // TODAS las rutas /api/* son públicas — manejan su propia autenticación
+  // (service role key, QStash signature, etc.). Sin esto, QStash recibe
+  // un redirect a /login y falla con 405.
+  if (request.nextUrl.pathname.startsWith('/api/')) return supabaseResponse
 
   // Sin sesión y ruta protegida → login
   if (!user && !isPublicPath) {
