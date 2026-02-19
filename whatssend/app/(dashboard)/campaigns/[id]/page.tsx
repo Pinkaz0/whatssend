@@ -58,7 +58,13 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     }
     try {
       const result = await sendCampaign.mutateAsync(campaignId)
-      if (result.sent === 0 && result.failed === 0 && (result as { message?: string }).message) {
+      // Modo QStash: la API responde con { queued: N }
+      if (result.queued != null && result.queued > 0) {
+        toast.success(`✓ ${result.queued} mensaje${result.queued !== 1 ? 's' : ''} encolado${result.queued !== 1 ? 's' : ''}`, {
+          description: 'QStash está enviando los mensajes a 1/seg. Recarga en unos momentos para ver el progreso.',
+          duration: 7000,
+        })
+      } else if (result.sent === 0 && result.failed === 0 && (result as { message?: string }).message) {
         toast.warning('Sin envíos', { description: (result as { message?: string }).message })
       } else if (result.failed > 0 && result.errors?.length) {
         toast.warning(`Enviados: ${result.sent}, Fallidos: ${result.failed}`, {
@@ -72,6 +78,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
       toast.error('Error al enviar', { description: err instanceof Error ? err.message : undefined })
     }
   }
+
 
   if (campaignQuery.isLoading) {
     return (

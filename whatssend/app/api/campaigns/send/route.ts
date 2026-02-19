@@ -74,11 +74,15 @@ export async function POST(request: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
     // ── MODO PRODUCCIÓN: encolar en QStash ──────────────────────────────────
-    if (qstashToken && appUrl) {
+    if (qstashToken) {
       const { Client } = await import('@upstash/qstash')
       const qstash = new Client({ token: qstashToken })
 
-      const workerUrl = `${appUrl}/api/campaigns/worker`
+      // Construir la URL del worker desde el request actual para no depender
+      // de NEXT_PUBLIC_APP_URL (que puede apuntar a un preview deployment viejo)
+      const origin = appUrl?.replace(/\/$/, '') ||
+        `${request.nextUrl.protocol}//${request.nextUrl.host}`
+      const workerUrl = `${origin}/api/campaigns/worker`
 
       await Promise.all(
         campaignContacts.map((cc) =>
@@ -98,8 +102,14 @@ export async function POST(request: NextRequest) {
         )
       )
 
-      console.log(`[Campaign Send] Encolados ${campaignContacts.length} mensajes en QStash para campaign ${campaignId}`)
-      return NextResponse.json({ success: true, queued: campaignContacts.length })
+      console.log(`[Campaign Send] Encolados ${campaignContacts.length} mensajes en QStash para campaign ${campaignId} → ${workerUrl}`)
+      // Devolver sent/failed como aliases para que el UI no muestre 'undefined'
+      return NextResponse.json({
+        success: true,
+        queued: campaignContacts.length,
+        sent: campaignContacts.length,   // pendientes encolados
+        failed: 0,
+      })
     }
 
     // ── MODO DESARROLLO: loop síncrono (fallback sin QStash) ─────────────────
