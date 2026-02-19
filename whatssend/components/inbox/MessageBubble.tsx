@@ -41,10 +41,10 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     >
       <div
         className={cn(
-          'max-w-[75%] rounded-2xl px-3.5 py-2 shadow-sm',
+          'max-w-[75%] rounded-lg px-3 py-1.5 shadow-sm text-[15px] leading-snug',
           isOutbound
-            ? 'bg-emerald-600 text-white rounded-br-md'
-            : 'bg-[#1A1D27] text-[#F1F5F9] border border-[#1E2235] rounded-bl-md',
+            ? 'bg-[#005C4B] text-[#E9EDEF] rounded-tr-none'
+            : 'bg-[#202C33] text-[#E9EDEF] rounded-tl-none',
           isPending && 'opacity-70'
         )}
       >

@@ -69,6 +69,30 @@ export function useContact(contactId: string | null) {
 }
 
 /**
+ * Hook para crear un solo contacto.
+ */
+export function useCreateContact() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (contact: ContactInsert) => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('contacts')
+        .insert(contact)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data as Contact
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] })
+    },
+  })
+}
+
+/**
  * Hook para crear/importar contactos en lote.
  */
 export function useImportContacts() {
@@ -77,13 +101,59 @@ export function useImportContacts() {
   return useMutation({
     mutationFn: async (contacts: ContactInsert[]) => {
       const supabase = createClient()
-      const { data, error } = await supabase
-        .from('contacts')
-        .upsert(contacts, { onConflict: 'workspace_id,phone' })
-        .select('id')
+      if (contacts.length === 0) return []
+      
+      const workspaceId = contacts[0].workspace_id
+      const phones = contacts.map(c => c.phone)
 
-      if (error) throw error
-      return data
+      // 1. Check existing phones to avoid 409/500 errors
+      const { data: existing, error: checkError } = await supabase
+        .from('contacts')
+        .select('phone')
+        .eq('workspace_id', workspaceId)
+        .in('phone', phones)
+      
+      if (checkError) throw checkError
+      
+      const existingPhones = new Set(existing?.map(e => e.phone))
+      
+      // Filter out existing in DB AND duplicates within the file itself
+      const uniqueNewContacts = new Map()
+      
+      contacts.forEach(c => {
+        if (!existingPhones.has(c.phone)) {
+           // If we haven't seen this phone in this batch yet, add it
+           if (!uniqueNewContacts.has(c.phone)) {
+             uniqueNewContacts.set(c.phone, c)
+           }
+        }
+      })
+      
+      const contactsToInsert = Array.from(uniqueNewContacts.values())
+      
+      if (contactsToInsert.length === 0) return []
+
+      // 2. Insert only new unique contacts
+      if (contactsToInsert.length > 0) {
+        const { error } = await supabase
+          .from('contacts')
+          .insert(contactsToInsert)
+      
+        if (error) throw error
+      }
+
+      // 3. Return ALL IDs (new + existing) for the campaign
+      // We need to fetch IDs for all phones we processed
+      const { data: allContacts, error: fetchError } = await supabase
+        .from('contacts')
+        .select('id, phone')
+        .eq('workspace_id', workspaceId)
+        .in('phone', phones)
+
+      if (fetchError) throw fetchError
+      
+      // Return array of objects consistent with previous signature, but containing all matching contacts
+      return allContacts.map(c => ({ id: c.id, phone: c.phone }))
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contacts'] })
@@ -124,6 +194,28 @@ export function useDeleteContact() {
     mutationFn: async (id: string) => {
       const supabase = createClient()
       const { error } = await supabase.from('contacts').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] })
+    },
+  })
+}
+
+/**
+ * Hook para eliminar TODOS los contactos del workspace.
+ */
+export function useDeleteAllContacts() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (workspaceId: string) => {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('contacts')
+        .delete()
+        .eq('workspace_id', workspaceId)
+      
       if (error) throw error
     },
     onSuccess: () => {

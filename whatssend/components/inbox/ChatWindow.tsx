@@ -5,6 +5,7 @@ import { Send, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MessageBubble } from './MessageBubble'
 import { MessageListSkeleton } from './MessageListSkeleton'
+import { TemplateSelector } from './TemplateSelector'
 import type { Message } from '@/types/message'
 
 interface ChatWindowProps {
@@ -12,9 +13,10 @@ interface ChatWindowProps {
   isLoading: boolean
   isSending: boolean
   onSendMessage: (message: string) => void
+  workspaceId: string | null
 }
 
-export function ChatWindow({ messages, isLoading, isSending, onSendMessage }: ChatWindowProps) {
+export function ChatWindow({ messages, isLoading, isSending, onSendMessage, workspaceId }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -65,11 +67,14 @@ export function ChatWindow({ messages, isLoading, isSending, onSendMessage }: Ch
   }, [messages.length, isAtBottom, scrollToBottom])
 
   // Auto-resize textarea
+  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
+     textarea.style.height = 'auto'
+     textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value)
-    const textarea = e.target
-    textarea.style.height = 'auto'
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
+    adjustTextareaHeight(e.target)
   }
 
   // Enter envía, Shift+Enter nueva línea
@@ -90,10 +95,29 @@ export function ChatWindow({ messages, isLoading, isSending, onSendMessage }: Ch
     // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
+      // Focus back to textarea
+      textareaRef.current.focus()
     }
 
     // Forzar scroll al fondo al enviar
     setTimeout(() => scrollToBottom('smooth'), 50)
+  }
+
+  const handleTemplateSelect = (text: string) => {
+     // Insert at cursor or append? Appending is easier for now, or just replace if empty.
+     // Let's append with a space if not empty.
+     setInputValue(prev => {
+        const prefix = prev ? prev + ' ' : ''
+        return prefix + text
+     })
+     
+     // Focus and resize
+     setTimeout(() => {
+        if (textareaRef.current) {
+           textareaRef.current.focus()
+           adjustTextareaHeight(textareaRef.current)
+        }
+     }, 10)
   }
 
   return (
@@ -134,6 +158,9 @@ export function ChatWindow({ messages, isLoading, isSending, onSendMessage }: Ch
       {/* Message composer */}
       <div className="border-t border-[#1E2235] bg-[#0F1117] p-3">
         <div className="flex items-end gap-2">
+          {workspaceId && (
+             <TemplateSelector workspaceId={workspaceId} onSelect={handleTemplateSelect} />
+          )}
           <div className="flex-1 relative">
             <textarea
               ref={textareaRef}
@@ -155,7 +182,7 @@ export function ChatWindow({ messages, isLoading, isSending, onSendMessage }: Ch
             <Send className="w-4 h-4" />
           </Button>
         </div>
-        <p className="text-[10px] text-[#475569] mt-1.5 ml-1">
+        <p className="text-[10px] text-[#475569] mt-1.5 ml-12">
           Enter para enviar · Shift+Enter nueva línea
         </p>
       </div>

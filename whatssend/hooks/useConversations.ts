@@ -1,6 +1,7 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 
 export interface Conversation {
@@ -21,9 +22,51 @@ export interface Conversation {
  * Usa polling cada 6 segundos.
  */
 export function useConversations(workspaceId: string | null, searchQuery?: string) {
+  const queryClient = useQueryClient()
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!workspaceId) return
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel('conversations_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `workspace_id=eq.${workspaceId}`,
+        },
+        () => {
+          // Invalidate to refresh the list
+          queryClient.invalidateQueries({ queryKey: ['conversations', workspaceId] })
+        }
+      )
+      .on(
+         'postgres_changes',
+         {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'messages',
+            filter: `workspace_id=eq.${workspaceId}`,
+         },
+         () => {
+            queryClient.invalidateQueries({ queryKey: ['conversations', workspaceId] })
+         }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [workspaceId, queryClient])
+
   return useQuery<Conversation[]>({
     queryKey: ['conversations', workspaceId, searchQuery],
     queryFn: async () => {
+      // ... same query logic ...
       if (!workspaceId) return []
 
       const supabase = createClient()
@@ -41,6 +84,11 @@ export function useConversations(workspaceId: string | null, searchQuery?: strin
       const { data, error } = await query
 
       if (error) {
+        // If view doesn't exist (yet), return empty to avoid crashing UI repeatedly
+        if (error.code === '42P01') { // undefined_table
+           console.warn('[useConversations] View not found, waiting for migration.')
+           return []
+        }
         console.error('[useConversations] Error:', error)
         throw error
       }
@@ -48,7 +96,7 @@ export function useConversations(workspaceId: string | null, searchQuery?: strin
       return (data || []) as Conversation[]
     },
     enabled: !!workspaceId,
-    refetchInterval: 6000,
-    staleTime: 3000,
+    refetchInterval: 10000, // Reduced frequency since we have realtime
+    staleTime: 5000,
   })
 }

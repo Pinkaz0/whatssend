@@ -34,9 +34,16 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const publicPaths = ['/login', '/register']
+  const publicApiPaths = ['/api/messages/webhook']
   const isPublicPath = publicPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   )
+  const isPublicApi = publicApiPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  )
+
+  // Webhook y APIs públicas: no redirigir (UltraMsg no envía cookies)
+  if (isPublicApi) return supabaseResponse
 
   // Sin sesión y ruta protegida → login
   if (!user && !isPublicPath) {

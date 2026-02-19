@@ -1,11 +1,22 @@
 'use client'
 
-import { use } from 'react'
-import { useCampaignDetail, useSendCampaign } from '@/hooks/useCampaigns'
+import { use, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useCampaignDetail, useSendCampaign, useResetCampaign, useDeleteCampaign } from '@/hooks/useCampaigns'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { formatPhoneDisplay } from '@/lib/utils/phone'
 import {
   ArrowLeft,
@@ -15,14 +26,20 @@ import {
   Clock,
   Loader2,
   Users,
+  RotateCcw,
+  Trash2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
 export default function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: campaignId } = use(params)
+  const router = useRouter()
   const { campaign: campaignQuery, contacts: contactsQuery } = useCampaignDetail(campaignId)
   const sendCampaign = useSendCampaign()
+  const resetCampaign = useResetCampaign()
+  const deleteCampaign = useDeleteCampaign()
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const campaign = campaignQuery.data
   const contacts = contactsQuery.data || []
@@ -33,11 +50,26 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const progress = contacts.length > 0 ? Math.round((sentCount / contacts.length) * 100) : 0
 
   const handleSend = async () => {
+    if (pendingCount === 0) {
+      toast.warning('Sin contactos pendientes', {
+        description: 'Esta campaña no tiene contactos por enviar. Crea una nueva campaña y agrega al menos un contacto.',
+      })
+      return
+    }
     try {
       const result = await sendCampaign.mutateAsync(campaignId)
-      toast.success(`Enviados: ${result.sent}, Fallidos: ${result.failed}`)
+      if (result.sent === 0 && result.failed === 0 && (result as { message?: string }).message) {
+        toast.warning('Sin envíos', { description: (result as { message?: string }).message })
+      } else if (result.failed > 0 && result.errors?.length) {
+        toast.warning(`Enviados: ${result.sent}, Fallidos: ${result.failed}`, {
+          description: result.errors.slice(0, 2).join(' · '),
+          duration: 8000,
+        })
+      } else {
+        toast.success(`Enviados: ${result.sent}, Fallidos: ${result.failed}`)
+      }
     } catch (err) {
-      toast.error('Error', { description: err instanceof Error ? err.message : undefined })
+      toast.error('Error al enviar', { description: err instanceof Error ? err.message : undefined })
     }
   }
 
@@ -82,21 +114,81 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             {campaign.status}
           </Badge>
         </div>
-        {campaign.status === 'draft' && (
-          <Button
-            onClick={handleSend}
-            disabled={sendCampaign.isPending}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
-          >
-            {sendCampaign.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4 mr-2" />
+        {(campaign.status === 'draft' || campaign.status === 'completed' || campaign.status === 'failed') && (
+          <div className="flex items-center gap-2">
+            {campaign.status === 'draft' && (
+              <Button
+                onClick={handleSend}
+                disabled={sendCampaign.isPending || pendingCount === 0}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                title={pendingCount === 0 ? 'Agrega contactos a la campaña primero' : undefined}
+              >
+                {sendCampaign.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                Enviar Campaña
+              </Button>
             )}
-            Enviar Campaña
-          </Button>
+            {(campaign.status === 'completed' || campaign.status === 'failed') && (
+              <Button
+                onClick={async () => {
+                  try {
+                    await resetCampaign.mutateAsync(campaignId)
+                    toast.success('Campaña reseteada. Puedes enviarla de nuevo.')
+                  } catch (err) {
+                    toast.error('Error al resetear', { description: err instanceof Error ? err.message : undefined })
+                  }
+                }}
+                disabled={resetCampaign.isPending}
+                variant="outline"
+                className="border-[#2A2F45] text-[#94A3B8] hover:text-white hover:bg-[#0F1117]"
+              >
+                {resetCampaign.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-2" />}
+                Reenviar
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={() => setDeleteOpen(true)}
+              className="border-[#2A2F45] text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/50"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Eliminar
+            </Button>
+          </div>
         )}
       </div>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent className="bg-[#1A1D27] border-[#1E2235] text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar campaña</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Eliminar &quot;{campaign.name}&quot;? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-[#2A2F45] text-[#94A3B8]">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                try {
+                  await deleteCampaign.mutateAsync(campaignId)
+                  toast.success('Campaña eliminada')
+                  router.push('/campaigns')
+                } catch (err) {
+                  toast.error('Error al eliminar', { description: err instanceof Error ? err.message : undefined })
+                }
+                setDeleteOpen(false)
+              }}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

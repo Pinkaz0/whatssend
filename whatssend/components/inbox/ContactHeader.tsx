@@ -1,5 +1,5 @@
 import { formatPhoneDisplay } from '@/lib/utils/phone'
-import { ArrowLeft, UserCircle } from 'lucide-react'
+import { ArrowLeft, UserCircle, Info } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import type { Conversation } from '@/hooks/useConversations'
 
@@ -7,9 +7,10 @@ interface ContactHeaderProps {
   conversation: Conversation
   onBack?: () => void
   showBackButton?: boolean
+  onInfoClick?: () => void
 }
 
-export function ContactHeader({ conversation, onBack, showBackButton }: ContactHeaderProps) {
+export function ContactHeader({ conversation, onBack, showBackButton, onInfoClick }: ContactHeaderProps) {
   const displayName = conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)
 
   const statusColors: Record<string, string> = {
@@ -33,13 +34,13 @@ export function ContactHeader({ conversation, onBack, showBackButton }: ContactH
       )}
 
       {/* Avatar */}
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center flex-shrink-0">
-        <UserCircle className="w-6 h-6 text-white/80" />
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center flex-shrink-0 text-white font-semibold">
+         {conversation.contact_name ? conversation.contact_name[0].toUpperCase() : <UserCircle className="w-6 h-6 text-white/80" />}
       </div>
 
       {/* Info */}
-      <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-semibold text-white truncate">{displayName}</h3>
+      <div className="flex-1 min-w-0 cursor-pointer" onClick={onInfoClick}>
+        <h3 className="text-sm font-semibold text-white truncate hover:underline">{displayName}</h3>
         <p className="text-xs text-[#64748B] truncate">
           {conversation.contact_name
             ? formatPhoneDisplay(conversation.contact_phone)
@@ -50,10 +51,20 @@ export function ContactHeader({ conversation, onBack, showBackButton }: ContactH
       {/* Status badge */}
       <Badge
         variant="outline"
-        className={`text-[10px] font-medium ${statusColors[conversation.contact_status] || statusColors.new}`}
+        className={`text-[10px] font-medium mr-2 ${statusColors[conversation.contact_status] || statusColors.new}`}
       >
         {conversation.contact_status}
       </Badge>
+
+      {/* Info Button */}
+      {onInfoClick && (
+          <button 
+            onClick={onInfoClick}
+            className="p-2 text-[#64748B] hover:text-white hover:bg-[#1A1D27] rounded-lg transition-colors"
+          >
+             <Info className="w-5 h-5" />
+          </button>
+      )}
     </div>
   )
 }

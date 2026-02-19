@@ -146,3 +146,53 @@ export function useSendCampaign() {
     },
   })
 }
+
+/**
+ * Resetea una campaña para poder reenviarla: pone todos los contactos en 'pending' y la campaña en 'draft'.
+ */
+export function useResetCampaign() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (campaignId: string) => {
+      const supabase = createClient()
+      const { error: ccError } = await supabase
+        .from('campaign_contacts')
+        .update({ status: 'pending', sent_at: null })
+        .eq('campaign_id', campaignId)
+      if (ccError) throw ccError
+
+      const { error: campError } = await supabase
+        .from('campaigns')
+        .update({ status: 'draft', sent_at: null })
+        .eq('id', campaignId)
+      if (campError) throw campError
+
+      return { ok: true }
+    },
+    onSuccess: (_, campaignId) => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] })
+      queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] })
+      queryClient.invalidateQueries({ queryKey: ['campaign-contacts', campaignId] })
+    },
+  })
+}
+
+/**
+ * Elimina una campaña (y sus campaign_contacts por CASCADE).
+ */
+export function useDeleteCampaign() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (campaignId: string) => {
+      const supabase = createClient()
+      const { error } = await supabase.from('campaigns').delete().eq('id', campaignId)
+      if (error) throw error
+      return { ok: true }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] })
+    },
+  })
+}

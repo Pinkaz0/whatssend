@@ -1,5 +1,9 @@
 'use client'
 
+// Pruebas locales con ngrok: true = usa la URL de ngrok como base del webhook. Cambiar a false al terminar.
+const USE_NGROK_WEBHOOK_FOR_TESTING = true
+const NGROK_WEBHOOK_BASE = 'https://af4f-181-43-210-243.ngrok-free.app'
+
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,6 +30,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [configuringWebhook, setConfiguringWebhook] = useState(false)
 
   // Workspace data
   const [workspaceId, setWorkspaceId] = useState<string | null>(null)
@@ -43,9 +48,17 @@ export default function SettingsPage() {
   const [googleKey, setGoogleKey] = useState('')
   const [showGoogleKey, setShowGoogleKey] = useState(false)
 
-  // Webhook URL
-  const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
-  const webhookUrl = `${appUrl}/api/messages/webhook`
+  // Webhook URL: en pruebas (ngrok) una sola URL. En producción usa NEXT_PUBLIC_APP_URL (Vercel) o origin.
+  const [webhookUrl, setWebhookUrl] = useState('')
+  useEffect(() => {
+    const base = USE_NGROK_WEBHOOK_FOR_TESTING
+      ? NGROK_WEBHOOK_BASE
+      : (process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : ''))
+    if (!base) return
+    const path = '/api/messages/webhook'
+    const query = !USE_NGROK_WEBHOOK_FOR_TESTING && workspaceId ? `?workspace_id=${workspaceId}` : ''
+    setWebhookUrl(`${base}${path}${query}`)
+  }, [workspaceId])
 
   // Cargar datos al montar
   useEffect(() => {
@@ -186,6 +199,28 @@ export default function SettingsPage() {
   const copyWebhookUrl = () => {
     navigator.clipboard.writeText(webhookUrl)
     toast.success('URL copiada al portapapeles')
+  }
+
+  const handleSetWebhookInUltraMsg = async () => {
+    if (!webhookUrl) return
+    setConfiguringWebhook(true)
+    try {
+      const res = await fetch('/api/settings/set-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ webhookUrl }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success('Webhook configurado', { description: data.message })
+      } else {
+        toast.error('Error', { description: data.error })
+      }
+    } catch {
+      toast.error('Error al configurar webhook')
+    } finally {
+      setConfiguringWebhook(false)
+    }
   }
 
   if (loading) {
@@ -333,12 +368,17 @@ export default function SettingsPage() {
 
           <Separator className="bg-[#1E2235]" />
 
-          {/* Webhook URL */}
+          {/* Webhook URL (única por workspace; en pruebas usa base ngrok) */}
           <div className="space-y-2">
             <Label className="text-[#94A3B8]">Webhook URL</Label>
             <p className="text-xs text-[#475569]">
-              Configura esta URL en tu panel de UltraMsg → Settings → Webhooks
+              Para recibir mensajes en la bandeja, UltraMsg debe tener esta URL y la opción &quot;message received&quot; activada. Usa el botón para configurarlo automáticamente.
             </p>
+            {USE_NGROK_WEBHOOK_FOR_TESTING && (
+              <p className="text-xs text-amber-500/90">
+                Modo pruebas: usando ngrok. Al terminar, pon USE_NGROK_WEBHOOK_FOR_TESTING = false en settings/page.tsx.
+              </p>
+            )}
             <div className="flex items-center gap-2">
               <Input
                 value={webhookUrl}
@@ -354,6 +394,17 @@ export default function SettingsPage() {
                 <Copy className="w-4 h-4" />
               </Button>
             </div>
+            <Button
+              variant="outline"
+              onClick={handleSetWebhookInUltraMsg}
+              disabled={configuringWebhook || !instanceId || !token || !webhookUrl}
+              className="border-[#2A2F45] text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/50"
+            >
+              {configuringWebhook ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : null}
+              Configurar webhook en UltraMsg
+            </Button>
           </div>
 
           {/* Link to UltraMsg */}

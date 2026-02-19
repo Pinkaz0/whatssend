@@ -1,40 +1,51 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useCampaigns, useSendCampaign } from '@/hooks/useCampaigns'
+import { useState } from 'react'
+import { useWorkspace } from '@/hooks/useWorkspace'
+import { useCampaigns, useSendCampaign, useDeleteCampaign } from '@/hooks/useCampaigns'
 import { CampaignCard } from '@/components/campaigns/CampaignCard'
 import { CreateCampaignModal } from '@/components/campaigns/CreateCampaignModal'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Megaphone, Plus } from 'lucide-react'
+import { Megaphone, Plus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function CampaignsPage() {
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null)
+  const { workspaceId, isLoading: wsLoading } = useWorkspace()
   const [createOpen, setCreateOpen] = useState(false)
-
-  useEffect(() => {
-    async function load() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data: ws } = await supabase.from('workspaces').select('id').eq('owner_id', user.id).limit(1).maybeSingle()
-      setWorkspaceId(ws?.id || null)
-    }
-    load()
-  }, [])
 
   const { data: campaigns = [], isLoading } = useCampaigns(workspaceId)
   const sendCampaign = useSendCampaign()
+  const deleteCampaign = useDeleteCampaign()
 
   const handleSend = async (id: string) => {
     try {
       const result = await sendCampaign.mutateAsync(id)
-      toast.success(`Campaña enviada: ${result.sent} mensajes`)
+      if (result.failed > 0 && result.errors?.length) {
+        toast.warning(`Enviados: ${result.sent}, Fallidos: ${result.failed}`, { description: result.errors.slice(0, 2).join(' · ') })
+      } else {
+        toast.success(`Enviados: ${result.sent}, Fallidos: ${result.failed}`)
+      }
     } catch (err) {
       toast.error('Error al enviar', { description: err instanceof Error ? err.message : undefined })
     }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteCampaign.mutateAsync(id)
+      toast.success('Campaña eliminada')
+    } catch (err) {
+      toast.error('Error al eliminar', { description: err instanceof Error ? err.message : undefined })
+    }
+  }
+
+  if (wsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -87,6 +98,7 @@ export default function CampaignsPage() {
               key={camp.id}
               campaign={camp}
               onSend={handleSend}
+              onDelete={handleDelete}
               sending={sendCampaign.isPending}
             />
           ))}

@@ -16,6 +16,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Kanban,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Separator } from '@/components/ui/separator'
@@ -23,8 +24,8 @@ import { Separator } from '@/components/ui/separator'
 const navItems = [
   { href: '/', label: 'Panel', icon: LayoutDashboard },
   { href: '/inbox', label: 'Bandeja', icon: MessageSquare },
+  { href: '/pipeline', label: 'Ventas', icon: Kanban },
   { href: '/campaigns', label: 'Campañas', icon: Megaphone },
-  { href: '/contacts', label: 'Contactos', icon: Users },
   { href: '/templates', label: 'Plantillas', icon: FileText },
   { href: '/bot', label: 'Bot', icon: Bot },
   { href: '/analytics', label: 'Analíticas', icon: BarChart3 },

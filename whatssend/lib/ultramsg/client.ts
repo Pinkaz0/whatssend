@@ -67,6 +67,44 @@ export class UltraMsgClient {
   }
 
   /**
+   * Configura la URL del webhook en UltraMsg y activa "message received".
+   * Sin esto, UltraMsg no envía POST cuando llega un mensaje.
+   */
+  async setWebhook(webhookUrl: string): Promise<SendResult> {
+    try {
+      const params = new URLSearchParams()
+      params.append('token', this.token)
+      params.append('sendDelay', '1')
+      params.append('sendDelayMax', '15')
+      params.append('webhook_url', webhookUrl)
+      params.append('webhook_message_received', 'true')
+      params.append('webhook_message_create', 'false')
+      params.append('webhook_message_ack', 'false')
+      params.append('webhook_message_download_media', 'false')
+
+      const response = await fetch(`${this.baseUrl}/instance/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('[UltraMsg] setWebhook HTTP error:', response.status, errorText)
+        return { ok: false, error: `HTTP ${response.status}: ${errorText}` }
+      }
+
+      const data = await response.json()
+      console.log('[UltraMsg] Webhook configurado:', webhookUrl)
+      return { ok: true, data: { sent: 'true', message: 'Webhook configurado', id: undefined } }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      console.error('[UltraMsg] setWebhook exception:', message)
+      return { ok: false, error: message }
+    }
+  }
+
+  /**
    * Verifica que las credenciales sean válidas.
    */
   async testConnection(): Promise<SendResult> {

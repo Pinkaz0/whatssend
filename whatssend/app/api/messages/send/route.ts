@@ -90,7 +90,11 @@ export async function POST(request: NextRequest) {
         workspace.ultramsg_token
       )
 
-      const result = await ultramsg.sendMessage(contact.phone, message)
+      // Normalize phone before sending (remove +, spaces, etc if needed by UltraMsg)
+      // Assuming contact.phone is already in E.164, but stripping '+' is safer for some APIs
+      const cleanPhone = contact.phone.replace(/\D/g, '')
+
+      const result = await ultramsg.sendMessage(cleanPhone, message)
 
       if (result.ok) {
         // 7. Actualizar estado a 'sent' con ID de UltraMsg
@@ -139,10 +143,13 @@ export async function POST(request: NextRequest) {
         { status: 502 }
       )
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('[Send] Unhandled error:', err)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { 
+        error: 'Error interno del servidor',
+        details: err?.message || String(err)
+      },
       { status: 500 }
     )
   }

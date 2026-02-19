@@ -33,14 +33,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Campaña no encontrada' }, { status: 404 })
     }
 
-    const workspace = campaign.workspaces as unknown as {
+    // Normalizar: relación puede venir como objeto o array (según Supabase/PostgREST)
+    const rawWorkspace = campaign.workspaces
+    const workspace = (Array.isArray(rawWorkspace) ? rawWorkspace[0] : rawWorkspace) as {
       owner_id: string
       ultramsg_instance_id: string | null
       ultramsg_token: string | null
+    } | null
+
+    if (!workspace || workspace.owner_id !== user.id) {
+      return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
     }
 
-    if (workspace.owner_id !== user.id) {
-      return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
+    if (!workspace.ultramsg_instance_id?.trim() || !workspace.ultramsg_token?.trim()) {
+      return NextResponse.json(
+        { error: 'Configura tu instancia y token de UltraMsg en Ajustes antes de enviar campañas.' },
+        { status: 400 }
+      )
     }
 
     // 2. Marcar campaña como 'sending'
@@ -56,21 +65,31 @@ export async function POST(request: NextRequest) {
       .eq('campaign_id', campaignId)
       .eq('status', 'pending')
 
+    console.log('[Campaign Send] Pendientes:', campaignContacts?.length ?? 0, 'campaignId:', campaignId)
+
     if (!campaignContacts || campaignContacts.length === 0) {
       await supabase.from('campaigns').update({ status: 'completed' }).eq('id', campaignId)
-      return NextResponse.json({ success: true, sent: 0 })
+      console.log('[Campaign Send] Sin contactos pendientes — campaña marcada completed')
+      return NextResponse.json({ success: true, sent: 0, failed: 0, message: 'No hay contactos pendientes en esta campaña.' })
     }
 
     // 4. Inicializar UltraMsg client
     const ultramsg = createUltraMsgClient(workspace.ultramsg_instance_id, workspace.ultramsg_token)
+    console.log('[Campaign Send] UltraMsg client OK, instance:', workspace.ultramsg_instance_id?.slice(0, 8) + '...')
 
     let sentCount = 0
     let failedCount = 0
+    const errors: string[] = []
 
     // 5. Enviar secuencialmente con delay para evitar throttling
     for (const cc of campaignContacts) {
       const contact = cc.contacts as unknown as { phone: string; name: string | null }
-      if (!contact?.phone) continue
+      if (!contact?.phone) {
+        console.warn('[Campaign Send] Contacto sin teléfono, contact_id:', cc.contact_id)
+        failedCount++
+        errors.push(`Contacto sin teléfono`)
+        continue
+      }
 
       // Personalizar mensaje
       let messageBody = campaign.message_body || ''
@@ -79,6 +98,7 @@ export async function POST(request: NextRequest) {
       messageBody = messageBody.replace(/\{\{telefono\}\}/gi, contact.phone || '')
       messageBody = messageBody.replace(/\{\{phone\}\}/gi, contact.phone || '')
 
+      console.log('[Campaign Send] Enviando a', contact.phone, '...')
       const result = await ultramsg.sendMessage(contact.phone, messageBody)
 
       if (result.ok) {
@@ -87,7 +107,6 @@ export async function POST(request: NextRequest) {
           .update({ status: 'sent', sent_at: new Date().toISOString() })
           .eq('id', cc.id)
 
-        // También guardar en messages
         await supabase.from('messages').insert({
           workspace_id: campaign.workspace_id,
           contact_id: cc.contact_id,
@@ -100,15 +119,18 @@ export async function POST(request: NextRequest) {
         })
 
         sentCount++
+        console.log('[Campaign Send] OK enviado a', contact.phone)
       } else {
         await supabase
           .from('campaign_contacts')
           .update({ status: 'failed' })
           .eq('id', cc.id)
         failedCount++
+        const errMsg = result.error || 'Error desconocido'
+        errors.push(`${contact.phone}: ${errMsg}`)
+        console.error('[Campaign Send] Fallo UltraMsg para', contact.phone, '—', errMsg)
       }
 
-      // Delay 1.5s entre mensajes para evitar throttling
       await new Promise(resolve => setTimeout(resolve, 1500))
     }
 
@@ -118,7 +140,13 @@ export async function POST(request: NextRequest) {
       .update({ status: 'completed', sent_at: new Date().toISOString() })
       .eq('id', campaignId)
 
-    return NextResponse.json({ success: true, sent: sentCount, failed: failedCount })
+    console.log('[Campaign Send] Fin — sent:', sentCount, 'failed:', failedCount, errors.length ? 'errores:' : '', errors)
+    return NextResponse.json({
+      success: true,
+      sent: sentCount,
+      failed: failedCount,
+      ...(errors.length > 0 && { errors }),
+    })
   } catch (err) {
     console.error('[Campaign Send] Error:', err)
     return NextResponse.json({ error: 'Error interno' }, { status: 500 })

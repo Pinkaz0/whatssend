@@ -36,5 +36,6 @@ LEFT JOIN LATERAL (
     AND m.direction = 'inbound'
     AND m.status != 'read'
 ) unread ON true
-WHERE lm.created_at IS NOT NULL
-ORDER BY lm.created_at DESC;
+WHERE lm.created_at IS NOT NULL OR c.created_at > (NOW() - INTERVAL '30 days') -- Show active contacts or new ones
+ORDER BY COALESCE(lm.created_at, c.created_at) DESC;
+

@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useWorkspace } from '@/hooks/useWorkspace'
 import { useAnalytics } from '@/hooks/useAnalytics'
 import { MessageChart, ContactGrowthChart, StatusPieChart } from '@/components/analytics/Charts'
 import { Card, CardContent } from '@/components/ui/card'
@@ -35,22 +34,11 @@ function MetricCard({ icon, label, value, color }: { icon: React.ReactNode; labe
 }
 
 export default function AnalyticsPage() {
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null)
+  const { workspaceId, isLoading: wsLoading } = useWorkspace()
+  const { data: analytics, isLoading: analyticsLoading } = useAnalytics(workspaceId)
 
-  useEffect(() => {
-    async function load() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data: ws } = await supabase.from('workspaces').select('id').eq('owner_id', user.id).limit(1).maybeSingle()
-      setWorkspaceId(ws?.id || null)
-    }
-    load()
-  }, [])
 
-  const { data: analytics, isLoading } = useAnalytics(workspaceId)
-
-  if (isLoading || !analytics) {
+  if (wsLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48 bg-[#1E2235]" />
@@ -65,6 +53,12 @@ export default function AnalyticsPage() {
         </div>
       </div>
     )
+  }
+
+  // Use placeholder data if analytics hasn't loaded yet
+  const data = analytics ?? {
+    totalContacts: 0, totalMessages: 0, inboundMessages: 0, outboundMessages: 0,
+    totalCampaigns: 0, activeBotRules: 0, contactsByStatus: [], messagesByDay: [], contactGrowth: [],
   }
 
   return (
@@ -83,48 +77,48 @@ export default function AnalyticsPage() {
         <MetricCard
           icon={<Users className="w-5 h-5 text-emerald-400" />}
           label="Contactos"
-          value={analytics.totalContacts}
+          value={data.totalContacts}
           color="bg-emerald-500/10"
         />
         <MetricCard
           icon={<MessageSquare className="w-5 h-5 text-blue-400" />}
           label="Mensajes"
-          value={analytics.totalMessages}
+          value={data.totalMessages}
           color="bg-blue-500/10"
         />
         <MetricCard
           icon={<ArrowDownLeft className="w-5 h-5 text-teal-400" />}
           label="Recibidos"
-          value={analytics.inboundMessages}
+          value={data.inboundMessages}
           color="bg-teal-500/10"
         />
         <MetricCard
           icon={<ArrowUpRight className="w-5 h-5 text-indigo-400" />}
           label="Enviados"
-          value={analytics.outboundMessages}
+          value={data.outboundMessages}
           color="bg-indigo-500/10"
         />
         <MetricCard
           icon={<Megaphone className="w-5 h-5 text-amber-400" />}
           label="Campañas"
-          value={analytics.totalCampaigns}
+          value={data.totalCampaigns}
           color="bg-amber-500/10"
         />
         <MetricCard
           icon={<Bot className="w-5 h-5 text-purple-400" />}
           label="Reglas Bot"
-          value={analytics.activeBotRules}
+          value={data.activeBotRules}
           color="bg-purple-500/10"
         />
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MessageChart data={analytics.messagesByDay} />
-        <StatusPieChart data={analytics.contactsByStatus} />
+        <MessageChart data={data.messagesByDay} />
+        <StatusPieChart data={data.contactsByStatus} />
       </div>
 
-      <ContactGrowthChart data={analytics.contactGrowth} />
+      <ContactGrowthChart data={data.contactGrowth} />
     </div>
   )
 }

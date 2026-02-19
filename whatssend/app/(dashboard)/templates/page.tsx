@@ -1,34 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState } from 'react'
+import { useWorkspace } from '@/hooks/useWorkspace'
 import { useTemplates, useCreateTemplate, useUpdateTemplate, useDeleteTemplate } from '@/hooks/useTemplates'
-import { TemplateEditor } from '@/components/templates/TemplateEditor'
+import { TemplateModal } from '@/components/templates/TemplateModal'
 import { TemplateCard } from '@/components/templates/TemplateCard'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Template, TemplateCategory } from '@/types/template'
-import { FileText, Plus } from 'lucide-react'
+import { FileText, Plus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function TemplatesPage() {
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null)
+  const { workspaceId, isLoading: wsLoading } = useWorkspace()
   const [categoryFilter, setCategoryFilter] = useState<string>('')
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null)
-  const [showEditor, setShowEditor] = useState(false)
-
-  useEffect(() => {
-    async function loadWorkspace() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data: ws } = await supabase.from('workspaces').select('id').eq('owner_id', user.id).limit(1).maybeSingle()
-      setWorkspaceId(ws?.id || null)
-    }
-    loadWorkspace()
-  }, [])
+  const [showModal, setShowModal] = useState(false)
 
   const {
     data: templates = [],
@@ -50,7 +38,7 @@ export default function TemplatesPage() {
         await createTemplate.mutateAsync({ workspace_id: workspaceId, ...data })
         toast.success('Plantilla creada')
       }
-      setShowEditor(false)
+      setShowModal(false)
       setEditingTemplate(null)
     } catch {
       toast.error('Error al guardar plantilla')
@@ -59,7 +47,7 @@ export default function TemplatesPage() {
 
   const handleEdit = (template: Template) => {
     setEditingTemplate(template)
-    setShowEditor(true)
+    setShowModal(true)
   }
 
   const handleDelete = async (id: string) => {
@@ -78,12 +66,15 @@ export default function TemplatesPage() {
 
   const handleNew = () => {
     setEditingTemplate(null)
-    setShowEditor(true)
+    setShowModal(true)
   }
 
-  const handleCancel = () => {
-    setShowEditor(false)
-    setEditingTemplate(null)
+  if (wsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -99,91 +90,80 @@ export default function TemplatesPage() {
             {templates.length} plantilla{templates.length !== 1 ? 's' : ''}
           </p>
         </div>
-        {!showEditor && (
-          <Button
-            onClick={handleNew}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nueva Plantilla
-          </Button>
-        )}
+        <Button
+          onClick={handleNew}
+          className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nueva Plantilla
+        </Button>
       </div>
 
-      {/* Editor (shown when creating/editing) */}
-      {showEditor && (
-        <Card className="bg-[#1A1D27] border-[#1E2235]">
-          <CardContent className="p-5">
-            <TemplateEditor
-              template={editingTemplate}
-              onSave={handleSave}
-              onCancel={handleCancel}
-              saving={createTemplate.isPending || updateTemplate.isPending}
-            />
-          </CardContent>
-        </Card>
-      )}
-
       {/* Filter */}
-      {!showEditor && (
-        <div className="flex items-center gap-3">
-          <Select
-            value={categoryFilter || '_all'}
-            onValueChange={(val) => setCategoryFilter(val === '_all' ? '' : val)}
+      <div className="flex items-center gap-3">
+        <Select
+          value={categoryFilter || '_all'}
+          onValueChange={(val) => setCategoryFilter(val === '_all' ? '' : val)}
+        >
+          <SelectTrigger className="w-[180px] bg-[#1A1D27] border-[#1E2235] text-white h-9 text-sm">
+            <SelectValue placeholder="Todas las categorías" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#1A1D27] border-[#2A2F45]">
+            <SelectItem value="_all" className="text-[#94A3B8]">Todas</SelectItem>
+            <SelectItem value="sales" className="text-white">💰 Ventas</SelectItem>
+            <SelectItem value="followup" className="text-white">🔄 Seguimiento</SelectItem>
+            <SelectItem value="welcome" className="text-white">👋 Bienvenida</SelectItem>
+            <SelectItem value="custom" className="text-white">✏️ Personalizada</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Templates grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-40 bg-[#1E2235] rounded-xl" />
+          ))}
+        </div>
+      ) : templates.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-[#1A1D27] flex items-center justify-center mb-6">
+            <FileText className="w-9 h-9 text-[#475569]" />
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">No hay plantillas</h3>
+          <p className="text-sm text-[#64748B] max-w-xs mb-4">
+            Crea plantillas de mensajes para agilizar tu comunicación con clientes.
+          </p>
+          <Button
+            onClick={handleNew}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white"
           >
-            <SelectTrigger className="w-[180px] bg-[#1A1D27] border-[#1E2235] text-white h-9 text-sm">
-              <SelectValue placeholder="Todas las categorías" />
-            </SelectTrigger>
-            <SelectContent className="bg-[#1A1D27] border-[#2A2F45]">
-              <SelectItem value="_all" className="text-[#94A3B8]">Todas</SelectItem>
-              <SelectItem value="sales" className="text-white">💰 Ventas</SelectItem>
-              <SelectItem value="followup" className="text-white">🔄 Seguimiento</SelectItem>
-              <SelectItem value="welcome" className="text-white">👋 Bienvenida</SelectItem>
-              <SelectItem value="custom" className="text-white">✏️ Personalizada</SelectItem>
-            </SelectContent>
-          </Select>
+            <Plus className="w-4 h-4 mr-2" />
+            Crear primera plantilla
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {templates.map((tpl) => (
+            <TemplateCard
+              key={tpl.id}
+              template={tpl}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onCopy={handleCopy}
+            />
+          ))}
         </div>
       )}
 
-      {/* Templates grid */}
-      {!showEditor && (
-        isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-40 bg-[#1E2235] rounded-xl" />
-            ))}
-          </div>
-        ) : templates.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 rounded-full bg-[#1A1D27] flex items-center justify-center mb-6">
-              <FileText className="w-9 h-9 text-[#475569]" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No hay plantillas</h3>
-            <p className="text-sm text-[#64748B] max-w-xs mb-4">
-              Crea plantillas de mensajes para agilizar tu comunicación con clientes.
-            </p>
-            <Button
-              onClick={handleNew}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Crear primera plantilla
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {templates.map((tpl) => (
-              <TemplateCard
-                key={tpl.id}
-                template={tpl}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onCopy={handleCopy}
-              />
-            ))}
-          </div>
-        )
-      )}
+      {/* Modal */}
+      <TemplateModal
+        open={showModal}
+        onOpenChange={setShowModal}
+        template={editingTemplate}
+        onSave={handleSave}
+        saving={createTemplate.isPending || updateTemplate.isPending}
+      />
     </div>
   )
 }

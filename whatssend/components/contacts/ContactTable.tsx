@@ -16,15 +16,15 @@ import type { Contact } from '@/types/contact'
 import { ContactTag } from './ContactTag'
 import { formatPhoneDisplay } from '@/lib/utils/phone'
 import { Button } from '@/components/ui/button'
-import { ArrowUpDown, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
-import Link from 'next/link'
+import { ArrowUpDown, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react'
 
 interface ContactTableProps {
   contacts: Contact[]
   isLoading: boolean
+  onEdit: (contact: Contact) => void
 }
 
-export function ContactTable({ contacts, isLoading }: ContactTableProps) {
+export function ContactTable({ contacts, isLoading, onEdit }: ContactTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
 
   const columns = useMemo<ColumnDef<Contact>[]>(
@@ -135,17 +135,17 @@ export function ContactTable({ contacts, isLoading }: ContactTableProps) {
       {
         id: 'actions',
         cell: ({ row }) => (
-          <Link
-            href={`/contacts/${row.original.id}`}
+          <button
+            onClick={() => onEdit(row.original)}
             className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
           >
-            Ver
-            <ExternalLink className="w-3 h-3" />
-          </Link>
+            <Edit2 className="w-3 h-3" />
+            Editar
+          </button>
         ),
       },
     ],
-    []
+    [onEdit]
   )
 
   const table = useReactTable({

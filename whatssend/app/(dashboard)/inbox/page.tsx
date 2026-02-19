@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState } from 'react'
+import { useWorkspace } from '@/hooks/useWorkspace'
 import { useInboxStore } from '@/stores/useInboxStore'
 import { useConversations } from '@/hooks/useConversations'
 import { useMessages, useSendMessage } from '@/hooks/useMessages'
@@ -9,12 +9,13 @@ import { ChatList } from '@/components/inbox/ChatList'
 import { ChatWindow } from '@/components/inbox/ChatWindow'
 import { ContactHeader } from '@/components/inbox/ContactHeader'
 import { EmptyChat } from '@/components/inbox/EmptyChat'
+import { ContactInfo } from '@/components/inbox/ContactInfo'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 export default function InboxPage() {
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null)
-  const [loadingWorkspace, setLoadingWorkspace] = useState(true)
+  const { workspaceId, isLoading: loadingWorkspace } = useWorkspace()
+  const [showContactInfo, setShowContactInfo] = useState(false)
 
   const {
     selectedContactId,
@@ -22,28 +23,6 @@ export default function InboxPage() {
     searchQuery,
     setSearchQuery,
   } = useInboxStore()
-
-  // Obtener workspace del usuario actual
-  useEffect(() => {
-    async function fetchWorkspace() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) return
-
-      const { data: workspace } = await supabase
-        .from('workspaces')
-        .select('id')
-        .eq('owner_id', user.id)
-        .limit(1)
-        .maybeSingle()
-
-      setWorkspaceId(workspace?.id || null)
-      setLoadingWorkspace(false)
-    }
-
-    fetchWorkspace()
-  }, [])
 
   // Hooks de datos
   const {
@@ -84,6 +63,7 @@ export default function InboxPage() {
 
   const handleBack = () => {
     setSelectedContactId(null)
+    setShowContactInfo(false)
   }
 
   const isLoadingList = loadingWorkspace || loadingConversations
@@ -115,11 +95,12 @@ export default function InboxPage() {
         />
       </div>
 
-      {/* Panel derecho: Chat Window */}
+      {/* Panel central: Chat Window */}
       <div
         className={cn(
-          'flex-1 flex flex-col min-w-0 relative',
-          !selectedContactId ? 'hidden md:flex' : 'flex'
+          'flex-1 flex flex-col min-w-0 relative transition-all duration-300',
+          !selectedContactId ? 'hidden md:flex' : 'flex',
+          showContactInfo ? 'mr-0 md:mr-[300px] lg:mr-[350px]' : ''
         )}
       >
         {selectedContactId && selectedConversation ? (
@@ -128,16 +109,34 @@ export default function InboxPage() {
               conversation={selectedConversation}
               onBack={handleBack}
               showBackButton
+              onInfoClick={() => setShowContactInfo(!showContactInfo)}
             />
             <ChatWindow
               messages={messages}
               isLoading={loadingMessages}
               isSending={sendMessage.isPending}
               onSendMessage={handleSendMessage}
+              workspaceId={workspaceId}
             />
           </>
         ) : (
           <EmptyChat />
+        )}
+      </div>
+
+      {/* Panel derecho: Info de Contacto */}
+      <div
+        className={cn(
+          'fixed inset-y-0 right-0 z-20 w-full md:w-[300px] lg:w-[350px] bg-[#0F1117] transform transition-transform duration-300 ease-in-out border-l border-[#1E2235] shadow-2xl md:shadow-none md:relative md:transform-none md:right-auto md:left-auto md:h-full md:border-l',
+          showContactInfo ? 'translate-x-0' : 'translate-x-full md:hidden'
+        )}
+        style={{ top: '64px' }}
+      >
+        {selectedContactId && selectedConversation && showContactInfo && (
+          <ContactInfo
+            conversation={selectedConversation}
+            onClose={() => setShowContactInfo(false)}
+          />
         )}
       </div>
     </div>

@@ -12,6 +12,10 @@ export interface Contact {
   tags: string[]
   status: ContactStatus
   notes: string | null
+  rut: string | null
+  address: string | null
+  comuna: string | null
+  alt_phone: string | null
   source: ContactSource | null
   metadata: Record<string, unknown> | null
   created_at: string
@@ -26,6 +30,10 @@ export interface ContactInsert {
   tags?: string[]
   status?: ContactStatus
   notes?: string | null
+  rut?: string | null
+  address?: string | null
+  comuna?: string | null
+  alt_phone?: string | null
   source?: ContactSource | null
   metadata?: Record<string, unknown> | null
 }
