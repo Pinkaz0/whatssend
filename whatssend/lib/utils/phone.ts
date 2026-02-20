@@ -12,16 +12,28 @@ export function normalizePhone(
 ): string | null {
   if (!input || typeof input !== 'string') return null
 
-  // Limpiar caracteres extra
-  const cleaned = input.trim()
+  // Limpiar caracteres extra (espacios, guiones, puntos, paréntesis)
+  let cleaned = input.trim().replace(/[\s\-\.\(\)]/g, '')
 
-  const phone = parsePhoneNumberFromString(cleaned, defaultCountry)
+  // Intentar parsear directamente
+  let phone = parsePhoneNumberFromString(cleaned, defaultCountry)
+  if (phone && phone.isValid()) return phone.format('E.164')
 
-  if (!phone || !phone.isValid()) {
-    return null
+  // Fallback 1: agregar + si parece número internacional sin +
+  if (/^\d{10,15}$/.test(cleaned) && !cleaned.startsWith('+')) {
+    phone = parsePhoneNumberFromString(`+${cleaned}`, defaultCountry)
+    if (phone && phone.isValid()) return phone.format('E.164')
   }
 
-  return phone.format('E.164')
+  // Fallback 2: números chilenos con código 56 pero sin el 9 del móvil
+  // Ej: 5697799896 (10 dígitos) → debería ser 56997799896 (11 dígitos)
+  if (/^56\d{8}$/.test(cleaned)) {
+    const withNine = `+569${cleaned.slice(2)}`
+    phone = parsePhoneNumberFromString(withNine, defaultCountry)
+    if (phone && phone.isValid()) return phone.format('E.164')
+  }
+
+  return null
 }
 
 /**
