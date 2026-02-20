@@ -248,17 +248,17 @@ export function CreateCampaignModal({ open, onOpenChange, workspaceId }: CreateC
                       <Select value={columnMapping.phone} onValueChange={v => setColumnMapping({...columnMapping, phone: v})}>
                         <SelectTrigger className="h-7 text-xs bg-[#0F1117] border-[#2A2F45]"><SelectValue/></SelectTrigger>
                         <SelectContent className="bg-[#1A1D27] border-[#2A2F45]">
-                          {parsedData?.headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                          {parsedData?.headers.filter(h => h.trim() !== '').map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                        <Label className="text-[10px] text-[#64748B]">Columna Nombre (Opcional)</Label>
-                       <Select value={columnMapping.name} onValueChange={v => setColumnMapping({...columnMapping, name: v})}>
+                       <Select value={columnMapping.name || '_no_map'} onValueChange={v => setColumnMapping({...columnMapping, name: v === '_no_map' ? '' : v})}>
                         <SelectTrigger className="h-7 text-xs bg-[#0F1117] border-[#2A2F45]"><SelectValue placeholder="No mapear"/></SelectTrigger>
                         <SelectContent className="bg-[#1A1D27] border-[#2A2F45]">
-                           <SelectItem value="">— No mapear —</SelectItem>
-                           {parsedData?.headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                           <SelectItem value="_no_map">— No mapear —</SelectItem>
+                           {parsedData?.headers.filter(h => h.trim() !== '').map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
                         </SelectContent>
                        </Select>
                     </div>
