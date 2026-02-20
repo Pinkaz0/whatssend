@@ -189,8 +189,53 @@ export default function SettingsPage() {
   }
 
   const handleSetWebhookInUltraMsg = async () => {
+    if (!instanceId || !token) {
+      toast.error('Ingresa el Instance ID y Token primero')
+      return
+    }
+
     setConfiguringWebhook(true)
     try {
+      // 1. Guardar/crear workspace primero para que la API encuentre las credenciales en la DB
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('No autorizado')
+        return
+      }
+
+      if (workspaceId) {
+        // Actualizar workspace existente
+        const { error } = await supabase
+          .from('workspaces')
+          .update({
+            name: workspaceName || 'Mi Workspace',
+            ultramsg_instance_id: instanceId || null,
+            ultramsg_token: token || null,
+            google_account_email: googleEmail || null,
+            google_private_key: googleKey || null,
+          })
+          .eq('id', workspaceId)
+        if (error) throw error
+      } else {
+        // Crear nuevo workspace
+        const { data, error } = await supabase
+          .from('workspaces')
+          .insert({
+            name: workspaceName || 'Mi Workspace',
+            owner_id: user.id,
+            ultramsg_instance_id: instanceId || null,
+            ultramsg_token: token || null,
+            google_account_email: googleEmail || null,
+            google_private_key: googleKey || null,
+          })
+          .select('id')
+          .single()
+        if (error) throw error
+        setWorkspaceId(data.id)
+      }
+
+      // 2. Ahora sí configurar el webhook (la API leerá las credenciales de la DB)
       const res = await fetch('/api/settings/set-webhook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -203,7 +248,8 @@ export default function SettingsPage() {
       } else {
         toast.error('Error', { description: data.error })
       }
-    } catch {
+    } catch (err) {
+      console.error('[Settings] Webhook setup error:', err)
       toast.error('Error al configurar webhook')
     } finally {
       setConfiguringWebhook(false)
