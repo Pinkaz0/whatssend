@@ -148,8 +148,8 @@ export default function VentasPage() {
     setLoadingOrders(prev => new Set(prev).add(orden))
 
     try {
-      const url = process.env.NEXT_PUBLIC_API_URL!
-      const res = await fetch(`${url}/api/toa/consultar`, {
+      // Llamar al proxy server-side (evita Mixed Content HTTPS→HTTP)
+      const res = await fetch('/api/toa/consultar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orden }),
@@ -198,8 +198,8 @@ export default function VentasPage() {
   const upd = async (o: string) => { 
     setUpdating(o); 
     try {
-      const url = process.env.NEXT_PUBLIC_API_URL!
-      const res = await fetch(`${url}/api/toa/consultar`, {
+      // Llamar al proxy server-side (evita Mixed Content HTTPS→HTTP)
+      const res = await fetch('/api/toa/consultar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orden: o }),
