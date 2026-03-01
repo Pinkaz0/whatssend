@@ -5,13 +5,16 @@ import { NextRequest, NextResponse } from 'next/server'
  * Proxy server-side hacia el VPS para evitar Mixed Content (HTTPS → HTTP).
  * El browser no puede llamar directamente a http:// desde https://
  */
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60 // Evita que Vercel corte la conexión a los 10-15 segundos (scrapeo toma ~30s)
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.TOA_API_URL
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.TOA_API_URL || 'http://89.167.104.163:8000'
 
     if (!apiUrl) {
-      return NextResponse.json({ error: 'TOA_API_URL no configurado' }, { status: 500 })
+      return NextResponse.json({ error: 'Falta configurar NEXT_PUBLIC_API_URL en Vercel Settings' }, { status: 501 })
     }
 
     const controller = new AbortController()
