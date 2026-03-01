@@ -14,17 +14,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'TOA_API_URL no configurado' }, { status: 500 })
     }
 
-    const res = await fetch(`${apiUrl}/api/toa/consultar`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 60000)
 
-    const data = await res.json()
-    return NextResponse.json(data, { status: res.status })
+    try {
+      const res = await fetch(`${apiUrl}/api/toa/consultar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      })
+      clearTimeout(timeoutId)
+
+      let data
+      const contentType = res.headers.get('content-type')
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json()
+      } else {
+        const text = await res.text()
+        data = { error: text || 'Respuesta inesperada del servidor TOA' }
+      }
+      
+      return NextResponse.json(data, { status: res.status })
+    } catch (fetchErr) {
+      clearTimeout(timeoutId)
+      throw fetchErr
+    }
 
   } catch (err) {
-    console.error('[TOA Proxy] Error:', err)
-    return NextResponse.json({ error: 'Error conectando con TOA' }, { status: 502 })
+    console.error('[TOA Proxy] Error Message:', err instanceof Error ? err.message : err)
+    console.error('[TOA Proxy] Full Error:', err)
+    return NextResponse.json({ error: 'Error conectando con TOA', details: err instanceof Error ? err.message : String(err) }, { status: 502 })
   }
 }

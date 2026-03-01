@@ -61,8 +61,8 @@ function ModalRegistro({ initial, onClose, workspaceId }: { initial?: RegistroVe
     try {
       // Remove any prefix from the BO code for the search if needed, but here we just pass it
       const ordenNum = form.bo.replace(/\D/g, '')
-      const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-      const res = await fetch(`${url}/api/toa/consultar`, {
+      // Llamar al proxy server-side (evita Mixed Content HTTPS→HTTP)
+      const res = await fetch('/api/toa/consultar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orden: ordenNum }),
