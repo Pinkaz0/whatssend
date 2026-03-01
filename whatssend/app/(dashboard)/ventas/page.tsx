@@ -148,7 +148,7 @@ export default function VentasPage() {
     setLoadingOrders(prev => new Set(prev).add(orden))
 
     try {
-      const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      const url = process.env.NEXT_PUBLIC_API_URL!
       const res = await fetch(`${url}/api/toa/consultar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -198,7 +198,7 @@ export default function VentasPage() {
   const upd = async (o: string) => { 
     setUpdating(o); 
     try {
-      const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      const url = process.env.NEXT_PUBLIC_API_URL!
       const res = await fetch(`${url}/api/toa/consultar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
