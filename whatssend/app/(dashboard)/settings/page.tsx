@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import {
-  Wifi, WifiOff, MessageSquare, Phone, Plus, Trash2, Loader2, Save, X, CheckCircle2, AlertCircle, QrCode
+  Wifi, WifiOff, MessageSquare, Phone, Plus, Trash2, Loader2, Save, X, CheckCircle2, AlertCircle, QrCode, AlertTriangle
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -33,6 +33,8 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savingEmails, setSavingEmails] = useState(false)
+  const [clearing, setClearing] = useState(false)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
   const supabase = createClient()
 
   // Load existing config
@@ -65,6 +67,24 @@ export default function SettingsPage() {
     }
     loadSettings()
   }, [])
+
+  const handleClearInbox = async () => {
+    setClearing(true)
+    setShowClearConfirm(false)
+    try {
+      const res = await fetch('/api/workspace/clear-inbox', { method: 'DELETE' })
+      const data = await res.json()
+      if (res.ok) {
+        setNotification({ title: '✅ Bandeja limpiada', message: 'Todos los mensajes y contactos fueron eliminados.', type: 'success' })
+      } else {
+        setNotification({ title: 'Error', message: data.error || 'No se pudo limpiar la bandeja.', type: 'error' })
+      }
+    } catch {
+      setNotification({ title: 'Error', message: 'Error de red al limpiar la bandeja.', type: 'error' })
+    } finally {
+      setClearing(false)
+    }
+  }
 
   const addEmail = () => {
     if (newEmail.trim() && newEmail.includes('@')) {
@@ -420,6 +440,66 @@ export default function SettingsPage() {
           </button>
         </div>
       </Section>
+
+      {/* ── Zona de Peligro ── */}
+      <Section className="border-rose-500/20">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-rose-500/10 flex-shrink-0 mt-0.5">
+            <AlertTriangle className="w-4 h-4 text-rose-400" />
+          </div>
+          <div className="flex-1">
+            <p className="text-rose-400 font-semibold text-sm">Zona de Peligro</p>
+            <p className="text-[#475569] text-xs mt-1">
+              Estas acciones son irreversibles. Úsalas solo si necesitas limpiar datos de prueba.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                disabled={clearing}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                style={{ borderColor: '#f43f5e30' }}
+              >
+                {clearing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                {clearing ? 'Limpiando...' : 'Limpiar toda la bandeja'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Confirmar Limpiar Bandeja ── */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-sm bg-[#0C0F1A] border border-rose-500/30 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-[#1E2537]">
+              <h3 className="text-white font-semibold text-sm flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-400" /> ¿Confirmar limpieza?
+              </h3>
+            </div>
+            <div className="p-5">
+              <p className="text-[#94A3B8] text-sm leading-relaxed">
+                Esto eliminará <strong className="text-white">todos los mensajes de la bandeja</strong> de tu workspace. Los contactos y campañas <strong className="text-emerald-400">no se tocarán</strong>. Esta acción <strong className="text-rose-400">no se puede deshacer</strong>.
+              </p>
+            </div>
+            <div className="p-4 bg-[#07090F] border-t border-[#1E2537] flex gap-2.5 justify-end">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-xs font-medium rounded-lg transition-colors border border-white/10"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleClearInbox}
+                disabled={clearing}
+                className="flex items-center gap-1.5 px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold rounded-lg transition-colors shadow-lg shadow-rose-500/20"
+              >
+                {clearing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                Sí, limpiar todo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── QR Modal ── */}
       {showQrModal && qrCode && (

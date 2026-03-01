@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Plus, Upload, RefreshCw, Download, Eye, Send,
@@ -120,8 +120,11 @@ export default function VentasPage() {
   const [sel, setSel] = useState<VentaTOA | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [updating, setUpdating] = useState<string | null>(null)
+  const [updatingAll, setUpdatingAll] = useState(false)
+  const [importingExcel, setImportingExcel] = useState(false)
   const [loadingOrders, setLoadingOrders] = useState<Set<string>>(new Set())
   const [sendingMsg, setSendingMsg] = useState(false)
+  const excelInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
   // Mezclar ventas de DB con placeholders locales
@@ -229,6 +232,54 @@ export default function VentasPage() {
     }
   }
 
+  // Actualizar todas las órdenes existentes desde TOA
+  const handleActualizarTodo = async () => {
+    if (!workspaceId || updatingAll) return
+    setUpdatingAll(true)
+    const ordenes = ventas.map(v => v.orden).filter(Boolean)
+    for (const o of ordenes) {
+      await upd(o)
+    }
+    setUpdatingAll(false)
+  }
+
+  // Importar Excel con columna de órdenes
+  const handleExcelImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !workspaceId) return
+    setImportingExcel(true)
+    try {
+      const { read, utils } = await import('xlsx')
+      const buffer = await file.arrayBuffer()
+      const wb = read(buffer, { type: 'array' })
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const rows: Record<string, string>[] = utils.sheet_to_json(ws, { defval: '' })
+
+      // Buscar columna que parezca contener N° de orden
+      const orderKeys = Object.keys(rows[0] || {}).filter(k =>
+        /orden|order|n.?orden|numero|number/i.test(k)
+      )
+      const key = orderKeys[0] || Object.keys(rows[0] || {})[0]
+
+      const ordenes = rows
+        .map(r => String(r[key] || '').replace(/\D/g, ''))
+        .filter(o => o.length >= 6)
+
+      // Procesar una a una con pausa de 2s entre cada orden
+      for (let i = 0; i < ordenes.length; i++) {
+        await handleAddOrder(ordenes[i])
+        if (i < ordenes.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000)) // 2s entre cada consulta TOA
+        }
+      }
+    } catch (err) {
+      console.error('Error leyendo Excel:', err)
+    } finally {
+      setImportingExcel(false)
+      if (excelInputRef.current) excelInputRef.current.value = ''
+    }
+  }
+
   const handleNotify = async (v: VentaTOA, type: 'notify' | 'reschedule') => {
     if (!workspaceId) return
     if (!v.telefono || v.telefono === '—') {
@@ -300,17 +351,37 @@ export default function VentasPage() {
     <div className="p-6 h-full overflow-auto space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2.5 flex-wrap">
+        {/* input oculto para Excel */}
+        <input
+          ref={excelInputRef}
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          className="hidden"
+          onChange={handleExcelImport}
+        />
         <button
           onClick={() => setShowAdd(true)}
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
         >
           <Plus style={{ width: 13, height: 13 }} /> Agregar Venta
         </button>
-        <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-[#94A3B8] hover:text-[#E2E8F0] border transition-colors hover:border-white/10" style={{ background: '#0C0F1A', borderColor: '#141928' }}>
-          <Upload style={{ width: 13, height: 13 }} /> Importar Excel
+        <button
+          onClick={() => excelInputRef.current?.click()}
+          disabled={importingExcel}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-[#94A3B8] hover:text-[#E2E8F0] border transition-colors hover:border-white/10 disabled:opacity-50"
+          style={{ background: '#0C0F1A', borderColor: '#141928' }}
+        >
+          <Upload style={{ width: 13, height: 13 }} />
+          {importingExcel ? 'Importando...' : 'Importar Excel'}
         </button>
-        <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-[#94A3B8] hover:text-[#E2E8F0] border transition-colors hover:border-white/10" style={{ background: '#0C0F1A', borderColor: '#141928' }}>
-          <RefreshCw style={{ width: 13, height: 13 }} /> Actualizar Todo TOA
+        <button
+          onClick={handleActualizarTodo}
+          disabled={updatingAll || ventas.length === 0}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-[#94A3B8] hover:text-[#E2E8F0] border transition-colors hover:border-white/10 disabled:opacity-50"
+          style={{ background: '#0C0F1A', borderColor: '#141928' }}
+        >
+          <RefreshCw style={{ width: 13, height: 13 }} className={updatingAll ? 'animate-spin' : ''} />
+          {updatingAll ? 'Actualizando...' : 'Actualizar Todo TOA'}
         </button>
         <div className="ml-auto">
           <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-[#94A3B8] hover:text-[#E2E8F0] border transition-colors hover:border-white/10" style={{ background: '#0C0F1A', borderColor: '#141928' }}>
