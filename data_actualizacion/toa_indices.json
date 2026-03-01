@@ -1,0 +1,870 @@
+[
+  {
+    "class": "button-upload__label",
+    "id": "index_62",
+    "tag": "LABEL",
+    "text": "¿Requiere Validacion Biometrica en Terreno?",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_62",
+    "tag": "DIV",
+    "text": "En Validacion",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_62",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_63",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_64",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_65",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_70",
+    "tag": "LABEL",
+    "text": "Número Petición",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_70",
+    "tag": "DIV",
+    "text": "1233458313",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_70",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_71",
+    "tag": "LABEL",
+    "text": "AccessId",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_71",
+    "tag": "DIV",
+    "text": "1200915225",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_71",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_72",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_73",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_74",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_75",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_76",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "index_77",
+    "tag": "INPUT",
+    "text": "",
+    "value": "1"
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_77",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_78",
+    "tag": "LABEL",
+    "text": "Subtipo de Actividad",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_78",
+    "tag": "DIV",
+    "text": "Alta",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_78",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_79",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_80",
+    "tag": "LABEL",
+    "text": "Tipo Trabajo",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_80",
+    "tag": "DIV",
+    "text": "At--------",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_80",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_81",
+    "tag": "LABEL",
+    "text": "Estado de la Actividad",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_81",
+    "tag": "DIV",
+    "text": "Pendiente",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_81",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_82",
+    "tag": "LABEL",
+    "text": "RUT del Cliente",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_82",
+    "tag": "DIV",
+    "text": "19966010-1",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_82",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_83",
+    "tag": "LABEL",
+    "text": "Nombre Cliente",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_83",
+    "tag": "DIV",
+    "text": "EDISON ORLANDO  SOLAR ROSALES",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_83",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_84",
+    "tag": "LABEL",
+    "text": "Segmento del cliente",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_84",
+    "tag": "DIV",
+    "text": "Residencial",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_84",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_85",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_86",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_87",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_137",
+    "tag": "LABEL",
+    "text": "Giro",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_137",
+    "tag": "DIV",
+    "text": "1233458313",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_137",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_138",
+    "tag": "LABEL",
+    "text": "Puntos Valor Actividad",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_138",
+    "tag": "DIV",
+    "text": "50",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_138",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_139",
+    "tag": "LABEL",
+    "text": "Secuencia en Ruta",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_139",
+    "tag": "DIV",
+    "text": "Ordenado",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_139",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_140",
+    "tag": "LABEL",
+    "text": "Zona de trabajo",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_140",
+    "tag": "DIV",
+    "text": "CONSTITUCION",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_140",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_141",
+    "tag": "LABEL",
+    "text": "Tiempo de Viaje",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_141",
+    "tag": "DIV",
+    "text": "15 min",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_141",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_142",
+    "tag": "LABEL",
+    "text": "Duración de la actividad",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_142",
+    "tag": "DIV",
+    "text": "1 Hora 23 min",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_142",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_359",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "index_144",
+    "tag": "INPUT",
+    "text": "",
+    "value": "1"
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_144",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_145",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_146",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_147",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_148",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_149",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_171",
+    "tag": "LABEL",
+    "text": "Fecha de Emisión/Reclamo",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_171",
+    "tag": "DIV",
+    "text": "2026/02/28 00:00",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_171",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_172",
+    "tag": "LABEL",
+    "text": "Fecha de Cita",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_172",
+    "tag": "DIV",
+    "text": "02/03/26",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_172",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_387",
+    "tag": "LABEL",
+    "text": "Intervalo de tiempo",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_387",
+    "tag": "DIV",
+    "text": "AM",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_387",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_388",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_174",
+    "tag": "LABEL",
+    "text": "Inicio de SLA",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_174",
+    "tag": "DIV",
+    "text": "28/02/26 12:00 AM",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_174",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_175",
+    "tag": "LABEL",
+    "text": "Fin de SLA",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_175",
+    "tag": "DIV",
+    "text": "12/03/26 12:00 PM",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_175",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_176",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_177",
+    "tag": "LABEL",
+    "text": "Hora Inicio - Fin Actividad",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_177",
+    "tag": "DIV",
+    "text": "12:00 AM - 01:23 AM",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_177",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_178",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "index_180",
+    "tag": "INPUT",
+    "text": "",
+    "value": "1"
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_180",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_237",
+    "tag": "LABEL",
+    "text": "SALTO VELOCIDAD",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_237",
+    "tag": "DIV",
+    "text": "400 beneficio salto velocidad 600",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_237",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_238",
+    "tag": "LABEL",
+    "text": "LIBRE ELECCION",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_238",
+    "tag": "DIV",
+    "text": "NO",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_238",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_239",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_240",
+    "tag": "LABEL",
+    "text": "Tecnologia Banda Ancha",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_240",
+    "tag": "DIV",
+    "text": "FO",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_240",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_241",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_242",
+    "tag": "LABEL",
+    "text": "Tipo de Acceso",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_242",
+    "tag": "DIV",
+    "text": "FO",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_242",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "index_243",
+    "tag": "INPUT",
+    "text": "",
+    "value": "1"
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_243",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "index_244",
+    "tag": "INPUT",
+    "text": "",
+    "value": "1"
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_244",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_245",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_246",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_247",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_248",
+    "tag": "LABEL",
+    "text": "Tipo Fibra",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_248",
+    "tag": "DIV",
+    "text": "BAYONETA",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_248",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_249",
+    "tag": "LABEL",
+    "text": "Tipo Conector",
+    "value": ""
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_249",
+    "tag": "DIV",
+    "text": "PRECONECTOR",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_249",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_250",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_251",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_269",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_271",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_272",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_273",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  },
+  {
+    "class": "form-field-error",
+    "id": "error-index_274",
+    "tag": "DIV",
+    "text": "",
+    "value": ""
+  }
+]

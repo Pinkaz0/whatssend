@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,8 +23,25 @@ interface TopBarProps {
 export function TopBar({ title, userEmail, userName }: TopBarProps) {
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => setMounted(true), [])
+
+  const routeTitles: Record<string, string> = {
+    '/': 'Panel de Control',
+    '/inbox': 'Bandeja de Entrada',
+    '/ventas': 'Gestión de Ventas',
+    '/registro': 'Registro de Ventas',
+    '/campaigns': 'Campañas & Plantillas',
+    '/contacts': 'Contactos',
+    '/bot': 'Super Agente',
+    '/analytics': 'Analíticas',
+    '/settings': 'Configuración',
+    '/pipeline': 'Pipeline',
+    '/templates': 'Plantillas',
+  }
+
+  const pageTitle = title || routeTitles[pathname] || 'Panel de Control'
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -43,7 +60,7 @@ export function TopBar({ title, userEmail, userName }: TopBarProps) {
     return (
       <header className="flex items-center justify-between h-16 px-6 border-b border-[#1E2235] bg-[#0F1117]/80 backdrop-blur-md">
         <div>
-          <h2 className="text-lg font-semibold text-white">{title || 'Panel de Control'}</h2>
+          <h2 className="text-lg font-semibold text-white">{pageTitle}</h2>
         </div>
         <div className="flex items-center gap-3">
           <div className="h-10 w-10" />
@@ -65,7 +82,7 @@ export function TopBar({ title, userEmail, userName }: TopBarProps) {
   return (
     <header className="flex items-center justify-between h-16 px-6 border-b border-[#1E2235] bg-[#0F1117]/80 backdrop-blur-md">
       <div>
-        <h2 className="text-lg font-semibold text-white">{title || 'Panel de Control'}</h2>
+        <h2 className="text-lg font-semibold text-white">{pageTitle}</h2>
       </div>
 
       <div className="flex items-center gap-3">

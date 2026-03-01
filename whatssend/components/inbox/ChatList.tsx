@@ -56,9 +56,9 @@ export function ChatList({
   onSearchChange,
 }: ChatListProps) {
   return (
-    <div className="flex flex-col h-full bg-[#0F1117]">
+    <div className="flex flex-col flex-1 min-h-0 bg-[#0F1117]">
       {/* Search bar */}
-      <div className="p-3 border-b border-[#1E2235]">
+      <div className="flex-shrink-0 p-3 border-b border-[#1E2235]">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#475569]" />
           <Input
@@ -71,7 +71,7 @@ export function ChatList({
       </div>
 
       {/* Conversation list */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {isLoading ? (
           <div className="p-4 space-y-4">
             {[...Array(5)].map((_, i) => (

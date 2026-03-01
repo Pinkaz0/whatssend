@@ -11,13 +11,14 @@ import {
   MessageSquare,
   Megaphone,
   Users,
-  FileText,
-  Bot,
+  Activity,
+  Package,
+  Zap,
   BarChart3,
   Settings,
   ChevronLeft,
   ChevronRight,
-  Kanban,
+  Briefcase,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Separator } from '@/components/ui/separator'
@@ -25,19 +26,20 @@ import { Separator } from '@/components/ui/separator'
 const navItems = [
   { href: '/', label: 'Panel', icon: LayoutDashboard },
   { href: '/inbox', label: 'Bandeja', icon: MessageSquare, badge: true },
-  { href: '/pipeline', label: 'Ventas', icon: Kanban },
-  { href: '/campaigns', label: 'Campañas', icon: Megaphone },
+  { href: '/ventas', label: 'Ventas', icon: Activity, badge: true },
+  { href: '/registro', label: 'Registro Ventas', icon: Package },
+  { href: '/campaigns', label: 'Campañas & Plantillas', icon: Megaphone },
   { href: '/contacts', label: 'Contactos', icon: Users },
-  { href: '/templates', label: 'Plantillas', icon: FileText },
-  { href: '/bot', label: 'Bot', icon: Bot },
+  { href: '/bot', label: 'Super Agente', icon: Zap },
   { href: '/analytics', label: 'Analíticas', icon: BarChart3 },
 ]
 
 const bottomItems = [
+  { href: '/backoffice', label: 'Admin BA/BP', icon: Briefcase, adminOnly: true },
   { href: '/settings', label: 'Configuración', icon: Settings },
 ]
 
-export function Sidebar() {
+export function Sidebar({ userEmail, isAdmin = false }: { userEmail?: string; isAdmin?: boolean }) {
   const pathname = usePathname()
   const { sidebarExpanded, setSidebarExpanded } = useAppStore()
   const { workspaceId } = useWorkspace()
@@ -45,6 +47,11 @@ export function Sidebar() {
 
   // Contar mensajes no leídos totales
   const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0)
+
+  const filteredBottomItems = bottomItems.filter(item => {
+    if (item.adminOnly && !isAdmin) return false
+    return true
+  })
 
   return (
     <aside
@@ -133,7 +140,7 @@ export function Sidebar() {
       {/* Sección inferior */}
       <div className="px-3 pb-4 space-y-1">
         <Separator className="bg-[#1E2235] mb-3" />
-        {bottomItems.map((item) => {
+        {filteredBottomItems.map((item) => {
           const isActive = pathname === item.href
           return (
             <Tooltip key={item.href} delayDuration={0}>

@@ -58,7 +58,7 @@ async function processContact(campaignContactId: string, campaignId: string): Pr
   // 1. Obtener campaign_contact con contacto y campaña
   const { data: cc, error: ccError } = await supabase
     .from('campaign_contacts')
-    .select('id, contact_id, status, contacts(phone, name), campaigns(message_body, workspace_id, workspaces(ultramsg_instance_id, ultramsg_token))')
+    .select('id, contact_id, status, contacts(phone, name), campaigns(message_body, workspace_id, workspaces(evolution_instance))')
     .eq('id', campaignContactId)
     .single()
 
@@ -77,7 +77,7 @@ async function processContact(campaignContactId: string, campaignId: string): Pr
   const campaign = cc.campaigns as unknown as {
     message_body: string
     workspace_id: string
-    workspaces: { ultramsg_instance_id: string; ultramsg_token: string } | { ultramsg_instance_id: string; ultramsg_token: string }[]
+    workspaces: { evolution_instance: string } | { evolution_instance: string }[]
   }
 
   const workspace = Array.isArray(campaign.workspaces) ? campaign.workspaces[0] : campaign.workspaces
@@ -87,8 +87,8 @@ async function processContact(campaignContactId: string, campaignId: string): Pr
     return NextResponse.json({ failed: true, reason: 'no phone' })
   }
 
-  if (!workspace?.ultramsg_instance_id || !workspace?.ultramsg_token) {
-    return NextResponse.json({ error: 'UltraMsg no configurado' }, { status: 400 })
+  if (!workspace?.evolution_instance) {
+    return NextResponse.json({ error: 'Evolution API no configurado' }, { status: 400 })
   }
 
   // 2. Personalizar mensaje
@@ -99,9 +99,12 @@ async function processContact(campaignContactId: string, campaignId: string): Pr
   messageBody = messageBody.replace(/\{\{phone\}\}/gi, contact.phone || '')
 
   // 3. Enviar mensaje
-  const { createUltraMsgClient } = await import('@/lib/ultramsg/client')
-  const ultramsg = createUltraMsgClient(workspace.ultramsg_instance_id, workspace.ultramsg_token)
-  const result = await ultramsg.sendMessage(contact.phone, messageBody)
+  const { createEvolutionClient } = await import('@/lib/whatsapp/evolution')
+  const evolution = createEvolutionClient(null, null, workspace.evolution_instance)
+  
+  // Normalize phone (Evolution requires no +, no spaces)
+  const cleanPhone = contact.phone.replace(/\D/g, '')
+  const result = await evolution.sendMessage(cleanPhone, messageBody)
 
   if (result.ok) {
     await supabase.from('campaign_contacts')
@@ -115,14 +118,14 @@ async function processContact(campaignContactId: string, campaignId: string): Pr
       direction: 'outbound',
       body: messageBody,
       status: 'sent',
-      ultramsg_message_id: result.data?.id || null,
+      evolution_message_id: result.data?.key?.id || null,
       sent_at: new Date().toISOString(),
     })
 
     console.log(`[Worker] ✓ Enviado a ${contact.phone}`)
   } else {
     await supabase.from('campaign_contacts')
-      .update({ status: 'failed', error_message: result.error || 'Error UltraMsg' })
+      .update({ status: 'failed', error_message: result.error || 'Error Evolution API' })
       .eq('id', cc.id)
 
     console.error(`[Worker] ✗ Fallo para ${contact.phone}:`, result.error)

@@ -1,0 +1,2084 @@
+[
+  {
+    "class": "",
+    "id": "fake-focus-reset",
+    "tag": "DIV",
+    "text": "Detalles de actividad. TALCA 3 - MULTI, 02/03/26 - Oracle Field Service"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "SCRIPT",
+    "text": "function setThemeCss(themeData) {\n        var DEFAULT_BG_VALUE = 'texture';\n\n        themeData = themeData || {};\n        var colors = themeData.colors && Array.isArray(themeData.colors) ? themeData.colors : [\"#34302E\", \"#312D2A\", DEFAULT_BG_VALUE];//the redwood colors by default\n        var isCustomTheme = themeData.isCustom;\n        var themeLabel = themeData.label;\n        var darkness = themeData.darkness && Array.isArray(themeData.darkness) ? themeData.darkness : [1, 1, 0];//the redwood colors by default\n        var bgColorIsSet = colors && colors[2] && colors[2] !== DEFAULT_BG_VALUE;\n        //set CSS variables vith theme colors\n        document.documentElement.style.setProperty('--theme-header-background-color', colors && colors[0] || \"#34302E\");\n        document.documentElement.style.setProperty('--theme-button-background-color', colors && colors[1] || \"#312D2A\");\n        if (bgColorIsSet) {\n            document.documentElement.style.setProperty('--theme-page-background-color', colors[2]);\n        } else {\n            document.documentElement.style.setProperty('--theme-page-background-color', 'transparent');\n        }\n\n        //remove all \"theme******\" CSS classes\n        document.body.classList.forEach(function(className){\n            if (className.indexOf('theme') !== -1) {\n                document.body.classList.remove(className);\n            }\n        });\n\n        document.body.classList.add('themeredwood'); //TODO It is a mistake \"themeredwood\" shouldn't be added with \"custom-theme\" but it is legacy!!!\n\n        //add custom theme class\n        if (isCustomTheme) {\n            document.body.classList.add(themeLabel);\n            document.body.classList.add('custom-theme');\n        }\n\n        //update classes that is responsible for darkness\n        [\n            'dark-header',\n            'dark-page',\n            'dark-submit',\n            'light-header',\n            'light-page',\n            'light-submit',\n            'bg-color-set'\n        ].forEach(function (className) {\n            document.body.classList.remove(className);\n        });\n\n        if (darkness[0]) {\n            document.body.classList.add('dark-header');\n        } else {\n            document.body.classList.add('light-header');\n        }\n\n        if (darkness[1]) {\n            document.body.classList.add('dark-submit');\n        } else {\n            document.body.classList.add('light-submit');\n        }\n\n        if (darkness[2]) {\n            document.body.classList.add('dark-page');\n        } else {\n            document.body.classList.add('light-page');\n        }\n        bgColorIsSet && document.body.classList.add('bg-color-set');\n    }\n\n    try {\n        setThemeCss({\"darkness\":[1,1,0],\"colors\":[\"#34302E\",\"#312D2A\",\"texture\"],\"isCustom\":0,\"label\":\"themeredwood\",\"text\":\"Field Service\"});\n    } catch (e){\n        console.error(e);\n    }"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "NOSCRIPT",
+    "text": "Por favor habilite JavaScript en su navegador"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "STYLE",
+    "text": "body.self-heal-checking {\n        font-family: 'Oracle Sans', sans-serif;\n        font-size: 1rem;\n        background-color: rgb(252, 251, 250);\n    }\n    #wait {\n        display: flex;\n        align-content: center;\n        align-items: center;\n        justify-content: center;\n        text-align: center;\n        left: 50%;\n        top: 50%;\n        transform: translate(-50%, -50%);\n        z-index: 1;\n        position: fixed;\n    }\n    #wait .text-message {\n        font-size   : 1.375rem;\n        font-family : Arial, Helvetica, Roboto, sans-serif !important;\n        font-stretch: condensed;\n        font-weight : 300 !important;\n        text-align  : center;\n        line-height : 1.5rem;\n        margin-top  : 18px;\n        color       : rgba(22, 21, 19, 0.65);\n    }\n    #wait_text {\n        display: flex;\n        flex-direction: column;\n        align-items: center;\n        justify-content: center;\n    }\n    #wait .loading-animated-icon {\n        display: inline-block;\n    }\n\n    .user-confirm {\n        position: absolute;\n        z-index: 2;\n        left: 0;\n        right: 0;\n        top: 0;\n        bottom: 0;\n        overflow: auto;\n        min-width: 320px;\n        background: #306170 url('../r2601.280.26.04.40544/mobile/css/../images/themeredwood/jpeg/Abstracts_Blue_2.jpg') center center no-repeat;\n        background-size: cover;\n        font-family: 'Oracle Sans';\n        color: #fcfbfa;\n        display: -webkit-box;\n        display: -ms-flexbox;\n        display: flex;\n        -webkit-box-align: start;\n        -ms-flex-align: start;\n        align-items: start;\n        -webkit-box-pack: center;\n        -ms-flex-pack: center;\n        justify-content: center;\n    }\n    .user-confirm-content {\n        -webkit-box-orient: vertical;\n        -webkit-box-direction: normal;\n        -ms-flex-direction: column;\n        flex-direction: column;\n        width: 300px;\n        margin: 215px 0 40px 0;\n    }\n    .user-confirm-header {\n        font-size: 20px;\n        font-weight: bold;\n    }\n    .user-confirm-text {\n        margin: 32px 0px 8px;\n        font-size: 14px;\n        font-weight: normal;\n    }\n    .user-confirm-button {\n        font-family: 'Oracle Sans';\n        font-weight: 500;\n        font-size: 14px;\n        border: 1px solid #A1a09F;\n        border-radius: 4px;\n        color: #1A1816;\n        background: #FFF;\n        box-sizing: border-box;\n        padding: 8px 16px;\n        height: 36px;\n        min-width: 88px;\n    }\n    .user-confirm-button:hover, .user-confirm-button:focus {\n        background-color: rgba(22, 21, 19, 0.04);\n        border-color: rgba(22, 21, 19, 0.6);\n    }\n    .user-confirm-button:focus {\n        border-color: rgba(22, 21, 19, 0.6);\n        outline: 1px dotted #161513;\n        outline-offset: 1px;\n    }\n    .user-confirm-button:disabled {\n        border-color: transparent;\n        color: rgba(22, 21, 19, 0.3);\n        background: rgba(123, 117, 112, 0.1);\n        box-shadow: none;\n    }\n    .user-confirm-button.submit {\n        color: #FFFFFF;\n        background: rgb(67, 107, 29);\n        border: none;\n    }\n    .user-confirm-button.submit:hover {\n        background-color: #577346;\n        background-image: linear-gradient(rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15));\n        border-color: transparent;\n    }\n    .user-confirm-button.submit:active {\n        background-color: #4F693F;\n    }\n    .user-confirm-button.submit:disabled {\n        background-color: #FCFBFA;\n        color: #D2D0CF;\n    }\n    .user-confirm-button.submit:focus {\n        background-color: #4F693F;\n        outline: 1px dotted #161513;\n        outline-offset: 1px;\n    }\n    .user-confirm-button:focus:not(:disabled) {\n        box-shadow: none;\n    }\n\n    .loading-animated-icon {\n        width: 32px;\n        height: 32px;\n        overflow: hidden;\n        position: relative;\n    }\n    .loading-animated-icon .part1 {\n        display: block;\n        position: absolute;\n        top: 0;\n        left: 0;\n        width: 15px;\n        height: 15px;\n        border-top-left-radius: 32px;\n        border: 1px solid #777;\n        border-bottom: 0 none;\n        border-right: 0 none;\n        -webkit-transform-origin: 16px 16px;\n        transform-origin: 16px 16px;\n        -webkit-animation: loading-animated-icon-rotating 1.2s linear infinite;\n        animation: loading-animated-icon-rotating 1.2s linear infinite;\n    }\n    .loading-animated-icon .part2 {\n        display: block;\n        position: absolute;\n        bottom: 4px;\n        right: 4px;\n        width: 11px;\n        height: 11px;\n        border-bottom-right-radius: 32px;\n        border: 1px solid #777;\n        border-top: 0 none;\n        border-left: 0 none;\n        -webkit-transform-origin: left top;\n        transform-origin: left top;\n        -webkit-animation: loading-animated-icon-rotating-backwards 1s linear infinite;\n        animation: loading-animated-icon-rotating-backwards 1s linear infinite;\n    }\n    .loading-animated-icon.none-animation-default .part1 {\n        -webkit-animation: none;\n        animation: none;\n    }\n    .loading-animated-icon.none-animation-default .part2 {\n        -webkit-animation: none;\n        animation: none;\n    }\n    .loading-animated-icon.none-animation-default.start-animation .part1 {\n        -webkit-animation: loading-animated-icon-rotating 0.7s linear infinite;\n        animation: loading-animated-icon-rotating 0.7s linear infinite;\n    }\n    .loading-animated-icon.none-animation-default.start-animation .part2 {\n        -webkit-animation: loading-animated-icon-rotating-backwards 0.5s linear infinite;\n        animation: loading-animated-icon-rotating-backwards 0.5s linear infinite;\n    }\n    .loading-animated-icon.loading-start .part1 {\n        border-color: #777;\n    }\n    .loading-animated-icon.loading-start .part2 {\n        border-color: #777;\n    }\n    .loading-animated-icon.loading-wait .part1 {\n        border-color: #777;\n    }\n    .loading-animated-icon.loading-wait .part2 {\n        border-color: #777;\n    }\n    .loading-animated-icon.big {\n        width: 64px;\n        height: 64px;\n    }\n    .loading-animated-icon.big .part1 {\n        width: 31px;\n        height: 31px;\n        border-top-left-radius: 64px;\n        border-width: 1px;\n        -webkit-transform-origin: 32px 32px;\n        transform-origin: 32px 32px;\n    }\n    .loading-animated-icon.big .part2 {\n        bottom: 4px;\n        right: 4px;\n        width: 27px;\n        height: 27px;\n        border-bottom-right-radius: 64px;\n        border-width: 1px;\n    }\n\n    @-webkit-keyframes loading-animated-icon-rotating {\n        100% {\n            -webkit-transform: rotate(360deg);\n            transform: rotate(360deg);\n        }\n    }\n    @-webkit-keyframes loading-animated-icon-rotating-backwards {\n        100% {\n            -webkit-transform: rotate(-360deg);\n            transform: rotate(-360deg);\n        }\n    }\n    @keyframes loading-animated-icon-rotating {\n        100% {\n            -webkit-transform: rotate(360deg);\n            transform: rotate(360deg);\n        }\n    }\n    @keyframes loading-animated-icon-rotating-backwards {\n        100% {\n            -webkit-transform: rotate(-360deg);\n            transform: rotate(-360deg);\n        }\n    }\n\n    .hidden {\n        display: none;\n    }"
+  },
+  {
+    "class": "text-message",
+    "id": "",
+    "tag": "DIV",
+    "text": "Cargando"
+  },
+  {
+    "class": "",
+    "id": "loadding_error_message",
+    "tag": "SPAN",
+    "text": "Inestabilidad de red detectada. Refresque la página o"
+  },
+  {
+    "class": "",
+    "id": "loadding_error_link",
+    "tag": "A",
+    "text": "vuelva a conectarse"
+  },
+  {
+    "class": "user-confirm-header",
+    "id": "",
+    "tag": "DIV",
+    "text": "The application could not load."
+  },
+  {
+    "class": "user-confirm-text",
+    "id": "",
+    "tag": "DIV",
+    "text": "Check your internet connection and reload the application."
+  },
+  {
+    "class": "user-confirm-button submit",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "Reload"
+  },
+  {
+    "class": "user-confirm-text",
+    "id": "",
+    "tag": "DIV",
+    "text": "If reloading does not help, try to restart the application.\n            This will clear the cache and the data on your device."
+  },
+  {
+    "class": "user-confirm-button submit",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "Clear and Restart"
+  },
+  {
+    "class": "",
+    "id": "loading",
+    "tag": "DIV",
+    "text": "Preparando datos para estado sin conexión"
+  },
+  {
+    "class": "hidden",
+    "id": "offline",
+    "tag": "SPAN",
+    "text": "Usted esta fuera de linea"
+  },
+  {
+    "class": "",
+    "id": "online",
+    "tag": "SPAN",
+    "text": "Usted esta en linea"
+  },
+  {
+    "class": "hidden",
+    "id": "data_sent",
+    "tag": "P",
+    "text": "Dato ha sido enviado"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "DIV",
+    "text": "Your data was not sent to server."
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "DIV",
+    "text": "¿Desea permitir guardar los datos en el servidor?"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "LABEL",
+    "text": "Acuse de recibo"
+  },
+  {
+    "class": "",
+    "id": "community-image-capture-text",
+    "tag": "DIV",
+    "text": "Anexar imagen"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "DIV",
+    "text": "Anexar archivo"
+  },
+  {
+    "class": "zoom-meeting-attach-text",
+    "id": "",
+    "tag": "DIV",
+    "text": "Zoom Meeting"
+  },
+  {
+    "class": "community-landscape-msg-done",
+    "id": "community-landscape-done-field",
+    "tag": "BUTTON",
+    "text": "Listo"
+  },
+  {
+    "class": "skip-nav-link",
+    "id": "skip-nav",
+    "tag": "A",
+    "text": "Omitir en contenido principal"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Menú"
+  },
+  {
+    "class": "placeholder-initials",
+    "id": "",
+    "tag": "DIV",
+    "text": "LL"
+  },
+  {
+    "class": "user-name",
+    "id": "",
+    "tag": "DIV",
+    "text": "LUIS LEONARDO CAMPOS"
+  },
+  {
+    "class": "global-navigation-item global-navigation-item--activities",
+    "id": "",
+    "tag": "A",
+    "text": "Consola de despacho"
+  },
+  {
+    "class": "global-navigation-item global-navigation-item--resources",
+    "id": "",
+    "tag": "A",
+    "text": "Recursos"
+  },
+  {
+    "class": "global-navigation-item global-navigation-item--quota",
+    "id": "",
+    "tag": "A",
+    "text": "Cuota"
+  },
+  {
+    "class": "global-navigation-item global-navigation-item--addon",
+    "id": "",
+    "tag": "A",
+    "text": "Consulta Biometria por Petición"
+  },
+  {
+    "class": "user-menu-item settings",
+    "id": "",
+    "tag": "A",
+    "text": "Preferencias"
+  },
+  {
+    "class": "user-menu-item about",
+    "id": "",
+    "tag": "A",
+    "text": "Acerca de"
+  },
+  {
+    "class": "user-menu-item logout",
+    "id": "",
+    "tag": "A",
+    "text": "Cerrar sesión"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Menú"
+  },
+  {
+    "class": "offline-message",
+    "id": "",
+    "tag": "DIV",
+    "text": "Sin conexión"
+  },
+  {
+    "class": "sync-required-message",
+    "id": "",
+    "tag": "DIV",
+    "text": "Fuera de línea. Sincronización necesaria."
+  },
+  {
+    "class": "sending-data-message",
+    "id": "",
+    "tag": "DIV",
+    "text": "Enviando datos..."
+  },
+  {
+    "class": "icon",
+    "id": "",
+    "tag": "SPAN",
+    "text": "0"
+  },
+  {
+    "class": "placeholder-initials",
+    "id": "",
+    "tag": "DIV",
+    "text": "LL"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Consola de despacho"
+  },
+  {
+    "class": "page-header-title",
+    "id": "",
+    "tag": "DIV",
+    "text": "Detalles de actividad"
+  },
+  {
+    "class": "page-header-description page-header-description--text",
+    "id": "",
+    "tag": "DIV",
+    "text": "TALCA 3 - MULTI, 02/03/26"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "undefined:undefined"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Ajustar tiempo"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Iniciar"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "No Realizada"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Mover"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Suspender"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Autorizar No Realizada"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Autorizar Suspender"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Desautorizar No Realizada"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Desautorizar Suspender"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Materiales"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Cancelar"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Comentarios"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Llamada Realizada"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Consola de despacho"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Consulta Biometria"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Datos de la Actividad"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Contacto y Dirección"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Datos ISP"
+  },
+  {
+    "class": "online-action button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Técnico Preferido"
+  },
+  {
+    "class": "section-dots",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Validación Biometría"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_62",
+    "tag": "LABEL",
+    "text": "¿Requiere Validacion Biometrica en Terreno?"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_62",
+    "tag": "DIV",
+    "text": "En Validacion"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_70",
+    "tag": "LABEL",
+    "text": "Número Petición"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_70",
+    "tag": "DIV",
+    "text": "1233458313"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_71",
+    "tag": "LABEL",
+    "text": "AccessId"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_71",
+    "tag": "DIV",
+    "text": "1200915225"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "title-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Actividad Critica"
+  },
+  {
+    "class": "symbol-asterisk",
+    "id": "",
+    "tag": "ABBR",
+    "text": "Necesario"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_78",
+    "tag": "LABEL",
+    "text": "Subtipo de Actividad"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_78",
+    "tag": "DIV",
+    "text": "Alta"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "activity-property-hint",
+    "id": "",
+    "tag": "DIV",
+    "text": "Subtipo de actividad"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_80",
+    "tag": "LABEL",
+    "text": "Tipo Trabajo"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_80",
+    "tag": "DIV",
+    "text": "At--------"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_81",
+    "tag": "LABEL",
+    "text": "Estado de la Actividad"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_81",
+    "tag": "DIV",
+    "text": "Pendiente"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_82",
+    "tag": "LABEL",
+    "text": "RUT del Cliente"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_82",
+    "tag": "DIV",
+    "text": "19966010-1"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_83",
+    "tag": "LABEL",
+    "text": "Nombre Cliente"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_83",
+    "tag": "DIV",
+    "text": "EDISON ORLANDO  SOLAR ROSALES"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_84",
+    "tag": "LABEL",
+    "text": "Segmento del cliente"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_84",
+    "tag": "DIV",
+    "text": "Residencial"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Datos de Fibra Optica"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Messages"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "History"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Derivación Planta Externa"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_137",
+    "tag": "LABEL",
+    "text": "Giro"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_137",
+    "tag": "DIV",
+    "text": "1233458313"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_138",
+    "tag": "LABEL",
+    "text": "Puntos Valor Actividad"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_138",
+    "tag": "DIV",
+    "text": "50"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_139",
+    "tag": "LABEL",
+    "text": "Secuencia en Ruta"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_139",
+    "tag": "DIV",
+    "text": "Ordenado"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_140",
+    "tag": "LABEL",
+    "text": "Zona de trabajo"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_140",
+    "tag": "DIV",
+    "text": "CONSTITUCION"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_141",
+    "tag": "LABEL",
+    "text": "Tiempo de Viaje"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_141",
+    "tag": "DIV",
+    "text": "15 min"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_142",
+    "tag": "LABEL",
+    "text": "Duración de la actividad"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_142",
+    "tag": "DIV",
+    "text": "1 Hora 23 min"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "title-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "CIERRE CONTINGENCIA"
+  },
+  {
+    "class": "symbol-asterisk",
+    "id": "",
+    "tag": "ABBR",
+    "text": "Necesario"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Productos y Servicios"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Datos Nodo"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Datos de Acceso"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Datos IP"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_171",
+    "tag": "LABEL",
+    "text": "Fecha de Emisión/Reclamo"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_171",
+    "tag": "DIV",
+    "text": "2026/02/28 00:00"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_172",
+    "tag": "LABEL",
+    "text": "Fecha de Cita"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_172",
+    "tag": "DIV",
+    "text": "02/03/26"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_387",
+    "tag": "LABEL",
+    "text": "Intervalo de tiempo"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_387",
+    "tag": "DIV",
+    "text": "AM"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_174",
+    "tag": "LABEL",
+    "text": "Inicio de SLA"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_174",
+    "tag": "DIV",
+    "text": "28/02/26 12:00 AM"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_175",
+    "tag": "LABEL",
+    "text": "Fin de SLA"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_175",
+    "tag": "DIV",
+    "text": "12/03/26 12:00 PM"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_177",
+    "tag": "LABEL",
+    "text": "Hora Inicio - Fin Actividad"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_177",
+    "tag": "DIV",
+    "text": "12:00 AM - 01:23 AM"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "title-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Infancia Baby Sitting"
+  },
+  {
+    "class": "symbol-asterisk",
+    "id": "",
+    "tag": "ABBR",
+    "text": "Necesario"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "online-action button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Mensajes"
+  },
+  {
+    "class": "online-action button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Historial"
+  },
+  {
+    "class": "button inline",
+    "id": "",
+    "tag": "A",
+    "text": "Cierre"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_237",
+    "tag": "LABEL",
+    "text": "SALTO VELOCIDAD"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_237",
+    "tag": "DIV",
+    "text": "400 beneficio salto velocidad 600"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_238",
+    "tag": "LABEL",
+    "text": "LIBRE ELECCION"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_238",
+    "tag": "DIV",
+    "text": "NO"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_240",
+    "tag": "LABEL",
+    "text": "Tecnologia Banda Ancha"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_240",
+    "tag": "DIV",
+    "text": "FO"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_242",
+    "tag": "LABEL",
+    "text": "Tipo de Acceso"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_242",
+    "tag": "DIV",
+    "text": "FO"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "title-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Validacion Tecnica"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "title-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Validacion Comercial"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_248",
+    "tag": "LABEL",
+    "text": "Tipo Fibra"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_248",
+    "tag": "DIV",
+    "text": "BAYONETA"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button-upload__label",
+    "id": "index_249",
+    "tag": "LABEL",
+    "text": "Tipo Conector"
+  },
+  {
+    "class": "form-item",
+    "id": "id_index_249",
+    "tag": "DIV",
+    "text": "PRECONECTOR"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "section-dots",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Información de actividad segmentable"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "sr-only",
+    "id": "",
+    "tag": "DIV",
+    "text": "error"
+  },
+  {
+    "class": "button dismiss",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "Cancelar"
+  },
+  {
+    "class": "button submit",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "OK"
+  },
+  {
+    "class": "rtl-text rtl-prov-name",
+    "id": "",
+    "tag": "SPAN",
+    "text": "CHILE"
+  },
+  {
+    "class": "none-core",
+    "id": "elId5",
+    "tag": "SPAN",
+    "text": "Pulse para ver acciones"
+  },
+  {
+    "class": "rtl-text rtl-prov-name",
+    "id": "",
+    "tag": "SPAN",
+    "text": "2017Eliminados"
+  },
+  {
+    "class": "rtl-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "(0)"
+  },
+  {
+    "class": "none-core",
+    "id": "elId7",
+    "tag": "SPAN",
+    "text": "Pulse para ver acciones"
+  },
+  {
+    "class": "rtl-text rtl-prov-name",
+    "id": "",
+    "tag": "SPAN",
+    "text": "2019Eliminados"
+  },
+  {
+    "class": "rtl-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "(0)"
+  },
+  {
+    "class": "none-core",
+    "id": "elId9",
+    "tag": "SPAN",
+    "text": "Pulse para ver acciones"
+  },
+  {
+    "class": "rtl-text rtl-prov-name",
+    "id": "",
+    "tag": "SPAN",
+    "text": "2020Eliminados"
+  },
+  {
+    "class": "rtl-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "(0)"
+  },
+  {
+    "class": "none-core",
+    "id": "elId11",
+    "tag": "SPAN",
+    "text": "Pulse para ver acciones"
+  },
+  {
+    "class": "rtl-text rtl-prov-name",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Bucket_Prueba"
+  },
+  {
+    "class": "rtl-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "(0)"
+  },
+  {
+    "class": "none-core",
+    "id": "elId13",
+    "tag": "SPAN",
+    "text": "Pulse para ver acciones"
+  },
+  {
+    "class": "rtl-text rtl-prov-name",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Gerencia Centro"
+  },
+  {
+    "class": "rtl-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "(0)"
+  },
+  {
+    "class": "none-core",
+    "id": "elId15",
+    "tag": "SPAN",
+    "text": "Pulse para ver acciones"
+  },
+  {
+    "class": "rtl-text rtl-prov-name",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Gerencia Norte"
+  },
+  {
+    "class": "none-core",
+    "id": "elId17",
+    "tag": "SPAN",
+    "text": "Pulse para ver acciones"
+  },
+  {
+    "class": "rtl-text rtl-prov-name",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Gerencia Sur"
+  },
+  {
+    "class": "none-core",
+    "id": "elId19",
+    "tag": "SPAN",
+    "text": "Pulse para ver acciones"
+  },
+  {
+    "class": "rtl-text rtl-prov-name",
+    "id": "",
+    "tag": "SPAN",
+    "text": "SSPP PLANTA INTERNA"
+  },
+  {
+    "class": "none-core",
+    "id": "elId21",
+    "tag": "SPAN",
+    "text": "Pulse para ver acciones"
+  },
+  {
+    "class": "rtl-text rtl-prov-name",
+    "id": "",
+    "tag": "SPAN",
+    "text": "System"
+  },
+  {
+    "class": "rtl-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "(0)"
+  },
+  {
+    "class": "none-core",
+    "id": "elId23",
+    "tag": "SPAN",
+    "text": "Pulse para ver acciones"
+  },
+  {
+    "class": "rtl-text rtl-prov-name",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Torre de Control_PTA"
+  },
+  {
+    "class": "rtl-text",
+    "id": "",
+    "tag": "SPAN",
+    "text": "(0)"
+  },
+  {
+    "class": "none-core",
+    "id": "elId25",
+    "tag": "SPAN",
+    "text": "Pulse para ver acciones"
+  },
+  {
+    "class": "indicator",
+    "id": "",
+    "tag": "DIV",
+    "text": "Cargando….."
+  },
+  {
+    "class": "toa-button toa-button-active left-arrow toa-search-button-back",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "Regresar a Busqueda"
+  },
+  {
+    "class": "toa-search-empty-title",
+    "id": "",
+    "tag": "DIV",
+    "text": "Clave de búsqueda no se encuentra en ninguna actividad"
+  },
+  {
+    "class": "toa-search-empty-msg",
+    "id": "",
+    "tag": "DIV",
+    "text": "Por favor, especifique los criterios de búsqueda"
+  },
+  {
+    "class": "toa-search-warning-title",
+    "id": "",
+    "tag": "DIV",
+    "text": "Advertencia"
+  },
+  {
+    "class": "toa-search-warning-msg",
+    "id": "",
+    "tag": "DIV",
+    "text": "Valor de búsqueda es menor a 3 simbolos"
+  },
+  {
+    "class": "icon-warning",
+    "id": "",
+    "tag": "DIV",
+    "text": "!"
+  },
+  {
+    "class": "toa-search-error-title",
+    "id": "",
+    "tag": "DIV",
+    "text": "Error de servidor"
+  },
+  {
+    "class": "toa-search-error-text",
+    "id": "",
+    "tag": "DIV",
+    "text": "El servidor encontró un error temporal y no pudo completar su solicitud."
+  },
+  {
+    "class": "toa-search-error-msg",
+    "id": "",
+    "tag": "DIV",
+    "text": "Por favor intente mas tarde"
+  },
+  {
+    "class": "toa-search-empty-title",
+    "id": "",
+    "tag": "DIV",
+    "text": "Los criterios de búsqueda son incorrectos"
+  },
+  {
+    "class": "toa-search-empty-msg",
+    "id": "",
+    "tag": "DIV",
+    "text": "Marque al menos una categoría para iniciar la búsqueda"
+  },
+  {
+    "class": "toa-search-preferences-name",
+    "id": "",
+    "tag": "DIV",
+    "text": "Buscar preferencias"
+  },
+  {
+    "class": "toa-button toa-button-active left-arrow toa-search-button-back",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "Regresar a Busqueda"
+  },
+  {
+    "class": "toa-search-preferences-header1",
+    "id": "",
+    "tag": "DIV",
+    "text": "Buscar categorias"
+  },
+  {
+    "class": "toa-search-preferences-header2",
+    "id": "",
+    "tag": "DIV",
+    "text": "Seleccionar y arrastrar categorias para ordenar los resultados de la búsqueda por prioridad"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "1"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por RUT del Cliente"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "2"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por Numero de Petición"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "3"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por Numero orden"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "4"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por Nombre"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "5"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por Correo electronico"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "6"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por Telefono"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "7"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por Telefono Contacto 1"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "8"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por AccessId"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "9"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por Direccion"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "10"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por Canal de Origen"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "11"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por Tipo Trabajo"
+  },
+  {
+    "class": "toa-search-preferences-index",
+    "id": "",
+    "tag": "DIV",
+    "text": "12"
+  },
+  {
+    "class": "toa-search-preferences-fieldname",
+    "id": "",
+    "tag": "DIV",
+    "text": "por ID SIOM"
+  },
+  {
+    "class": "toa-search-preferences-header1",
+    "id": "",
+    "tag": "DIV",
+    "text": "Fecha"
+  },
+  {
+    "class": "toa-search-preferences-header2",
+    "id": "",
+    "tag": "DIV",
+    "text": "Solo las fechas seleccionadas se mostrarán en los resultados de la busqueda:"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "OPTION",
+    "text": "Comenzando hoy"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "OPTION",
+    "text": "Comenzado dos dias después"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "OPTION",
+    "text": "Comenzado 7 dias después"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "OPTION",
+    "text": "Comenzado 30 dias después"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "OPTION",
+    "text": "sin restricción de tiempo"
+  },
+  {
+    "class": "sr-only screen-panel-sr-close-button",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "Atrás"
+  },
+  {
+    "class": "sr-only app-menu-sr-close-button",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "Atrás"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Atrás"
+  },
+  {
+    "class": "sr-only app-menu-sr-close-button",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "Atrás"
+  },
+  {
+    "class": "app-button-title",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Atrás"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "SCRIPT",
+    "text": "try {\n        var OfscIndex=function(l,J,a){function b(f,q){for(var v=[],h=0;h<f.length;h++){var w=h,x=f[h]&&f[h].e;if(x&&0<x.length)for(var B=0;B<x.length;B++)v.push({e:x[B].et?x[B].et:0,d:x[B].d,b:{st:w+1,ca:f[h].a,d:Object.assign(x[B],{\"run-id\":g.runId},q||{})}})}return v}function c(){var f=Promise.resolve(),q=function(v){g.error(n.self_heal_not_helped,g.CLEAR_CACHE_ERROR,v);return!1};\"undefined\"!==typeof window.caches&&(f=caches.keys().then(function(v){return Promise.all(v.map(function(h){return h&&caches.delete(h)||\nPromise.resolve()}))}.bind(this)).catch(q));return f.then(k).then(d).catch(q)}function d(){return navigator.serviceWorker?navigator.serviceWorker.getRegistration(\"\").then(function(f){f&&f.unregister()}).catch(function(f){g.error(n.self_heal_applied,g.ERROR_UNREGISTER_SERVICE_WORKER,f)}):Promise.resolve()}function k(){try{return window.applicationCacheService.disableCache()}catch(f){return g.error(n.self_heal_applied,g.ERROR_REMOVE_APP_CACHE,f),Promise.resolve(!1)}}function G(){return c().then(function(){try{localStorage.clear()}catch(f){}try{sessionStorage.clear()}catch(f){}try{window.name=\n\"\"}catch(f){}})}function K(){return G().then(function(){if(window.bridge&&window.bridge.isMafDeviceReady())return(new Promise(function(f,q){window.bridge.clearCacheAndRedirect(f,q,a)})).catch(function(f){})})}function H(){try{a&&window.location.replace(a)}catch(f){a&&(window.location.href=a)}}function L(f){try{if(f=Array.isArray(f)?f:[],0<f.length){for(var q=document.getElementById(\"user-confirm\"),v=q.getElementsByClassName(\"user-confirm-buttons\"),h=function(){for(;v.firstElementChild;)v.removeChild(v.firstElementChild);\nq.classList.add(\"hidden\")},w=0,x=f.length;w<x;++w){var B=v[w],E=document.createElement(\"button\");E.type=\"button\";E.classList.add(\"user-confirm-button\",\"submit\");for(E.tabindex=0;B.firstElementChild;)B.removeChild(B.firstElementChild);B.appendChild(f[w](E,h))}q.classList.remove(\"hidden\");document.title=\"The application could not load.\"}}catch(M){g.error(n.error_start_app,g.CANNOT_DISPLAY_SELF_HEAL_POPUP,M),F(n.error_start_app).then(function(){return c()}).then(function(){H()})}}function u(f,q){var v=\nL.bind(null,S(N)),h=f.et||0;g.error(h,q,f);F(h).then(function(){v()})}function p(f,q,v){if(f&&f.canReloadPage()&&1===Number(f.attempts))return c().then(function(){N()});u(q,v)}var r=l||{},D=J||{};window.ofsFiles={js:r,css:D};var y=window.loader,n={restore_session_screen_show:-6,self_heal_screen_show:-5,error_start_app:-4,self_heal_applied:-3,self_heal_not_helped:-2,success_start_app:-1};l=function(){var f=0,q=[],v=(new Date).getTime(),h=0,w=!0,x=function(e){try{return sessionStorage[e].apply(sessionStorage,\n[\"tl\"].concat(Array.prototype.slice.call(arguments,1)))}catch(m){w=!1}},B=x.bind(this,\"removeItem\"),E=x.bind(this,\"setItem\");x=x.bind(this,\"getItem\");const M=function(){this.e=[];this.a=0;this.ce={};this.s=[];this.d=(new Date).getTime();Object.defineProperty(this,\"toObject\",{get:()=>()=>{const e=Object.assign({},this);0===e.a;delete e.a;0===Object.keys(e.ce).length&&delete e.ce;delete e.s;delete e.d;delete e.e;return e}});Object.defineProperty(this,\"pushError\",{get:()=>(e,m,t,I)=>{isNaN(m)||(P|=m);\nz[A].e.push({t:m,e:t,et:e||0,r:I||0,d:(new Date).getTime()});z[A].ce[m]=(z[A].ce[m]||0)+1}});Object.defineProperty(this,\"pushEvents\",{get:()=>(e,m)=>{Array.isArray(this.e)&&this.e.map(t=>{m.push(t.et,{d:{t:t.t,r:t.r,e:t.e},a:this.a,st:e})})}})};M.fromObject=e=>{const m=new M;Object.assign(m,e||{});return m};var A=this.STAGE1,P=0,z=[new M],O=function(){return{b:P,c:A,s:z,rid:f,nl:q}},T=function(e){P=e&&e.b||P;A=e&&e.c||A;e&&Array.isArray(e.s)&&(z=e.s.map(M.fromObject));f=e&&e.rid||f;q=e&&e.nl||q};\ntry{T(JSON.parse(x()))}catch(e){console.log(e)}Object.defineProperties(this,{attempts:{get:function(){return z[A].a||0},set:function(e){z[A].a=e;E(JSON.stringify(O()))}},forceIgnoreCache:{get:function(){return z[A].fic||!1},set:function(e){z[A].fic=e;E(JSON.stringify(O()))}},runId:{get:function(){return f},set:function(e){f=e;E(JSON.stringify(O()))}},nativeLogs:{get:function(){return q},set:function(e){q=e;E(JSON.stringify(O()))}}});this.getNativeLogsCounter=0;this.pushEvents=function(e){return this.toObject().then(m=>\n{this.getStages().map((t,I)=>t.pushEvents(I,e));e.push(app.eventLogging.EventLoggingConstants.EVENT_SUCCESS_START_APP,{ds:Array.isArray(m)?m.reduce((t,I,R)=>({...t,[`st${++R}`]:I}),{}):m})})};this.pushToStack=function(e){z[A].s.push(e);E(JSON.stringify(O()));return this};this.hasError=function(e){return!!z[A].ce[e]};this.error=function(e,m,t,I){z[A].pushError(e,m,t,I);E(JSON.stringify(O()))};this.switchStage=function(e){A=e;h=(new Date).getTime()-v;z[A-1].sdt=h;z[A]||(z[A]=new M);E(JSON.stringify(O()))};\nthis.canReloadPage=function(){return w};this.reset=function(){B();z=[new M];A=0;return this};this.toObject=function(e=n.success_start_app){h=(new Date).getTime()-v;z[A].sdt=h;return g.getParsedNativeLogs(e).then(function(m){return z.concat([]).map(function(t){return Object.assign(t&&t.toObject&&t.toObject()||t,-1!==f?{\"run-id\":f}:{},m||{})})})};this.getStages=function(){return z};this.getCoreLaunchTime=function(){return h};this.saveNativeLogs=function(e){Array.isArray(e)&&(this.nativeLogs=e.filter(function(m){return m[\"run-id\"]==\nf&&\"launch\"===m.e}),0===this.nativeLogs.length&&(this.nativeLogs=e.filter(function(m){return\"launch\"===m.e})));this.nativeLogs=1<this.nativeLogs.length?this.nativeLogs.slice(0,1):this.nativeLogs;return Promise.resolve(this.nativeLogs)};this.getRunId=function(){a:{for(var e=document.cookie.length,m=0;m<e;){var t=m+7;if(\"run-id=\"==document.cookie.substring(m,t)){e=document.cookie.indexOf(\";\",t);-1==e&&(e=document.cookie.length);t=unescape(document.cookie.substring(t,e));break a}m=document.cookie.indexOf(\" \",\nm)+1;if(!m)break}t=\"\"}return this.runId=t||-1};this.isMaf=function(){return window.bridge&&\"function\"===typeof window.bridge.isMaf&&window.bridge.isMaf()};this.getNativeLogs=function(){return this.isMaf()&&\"function\"===typeof window.bridge.isLogsApiAvailable&&window.bridge.isLogsApiAvailable()&&\"function\"===typeof window.bridge.getLogs?window.bridge.getLogs():Promise.resolve([])};this.getNativeLogPropsValue=function(){var e=[\"di\",\"dn\"],m={};let t={};if(0<this.nativeLogs.length&&this.nativeLogs[0].m&&\n\"string\"===typeof this.nativeLogs[0].m){try{t=JSON.parse(this.nativeLogs[0].m)}catch(R){}0>f&&t.rId&&(f=t.rId)}for(var I in t)Object.hasOwnProperty.call(t,I)&&-1!==e.indexOf(I)&&(m[I]=t[I]);return Promise.resolve(m)};this.waitNativeLogs=function(e){if(!this.isMaf())return e(this.nativeLogs);setTimeout(function(){return this.getNativeLogs().then(this.saveNativeLogs.bind(this)).then(()=>{if(0===this.nativeLogs.length&&2>this.getNativeLogsCounter)return this.getNativeLogsCounter++,this.waitNativeLogs(e);\nthis.getNativeLogsCounter=0;return e(this.nativeLogs)})}.bind(this),500)};this.getParsedNativeLogs=function(e){return(new Promise(m=>this.waitNativeLogs(m))).then(this.getNativeLogPropsValue.bind(this)).catch(function(m){this.error(e,this.CANNOT_LOAD_NATIVE_LOGS,m)}.bind(this))}};l.prototype.CANNOT_IGNITE_APP=1;l.prototype.NOT_ENOUGH_DATA_FOR_START=2;l.prototype.CANNOT_LOAD_CONFIGURATION_FILES=3;l.prototype.RETRY_LOAD_CONFIGURATION_FILES=4;l.prototype.CANNOT_LOAD_JS_FILES=5;l.prototype.RETRY_LOAD_JS_FILES=\n6;l.prototype.RETRY_LOAD_JBF_FILES=7;l.prototype.RETRY_LOAD_THEMES=9;l.prototype.RELOAD_BY_USER=11;l.prototype.ERROR_HANDLE_ANOTHER_CONFIGURATION=12;l.prototype.RESTART=13;l.prototype.CLEAR_CACHE_ERROR=14;l.prototype.FETCH_DATA_ERROR=15;l.prototype.CANNOT_IGNITE_SESSION=16;l.prototype.CANNOT_LOAD_RESOURCES=17;l.prototype.CANNOT_CREATE_APP=18;l.prototype.ERROR_UPDATE_CACHE=19;l.prototype.ERROR_ANOTHER_USER=20;l.prototype.ERROR_CHECK_SESSION=21;l.prototype.CANNOT_DISPLAY_SELF_HEAL_POPUP=22;l.prototype.ERROR_REMOVE_APP_CACHE=\n23;l.prototype.ERROR_UNREGISTER_SERVICE_WORKER=24;l.prototype.ERROR_CREATE_MAIN=25;l.prototype.ERROR_CONTINUE_CURRENT_USER=26;l.prototype.CANNOT_LOAD_NATIVE_LOGS=27;l.prototype.STAGE1=0;l.prototype.STAGE2=1;l.prototype.STAGE3=2;var g=new l,N=function(){window.location.reload()},C=function(){return function(f,q,v){var h=[\"m=sync\",\"a=write\",\"ajax=1\"],w=new FormData;w.append(\"queue[0][t]\",\"log\");w.append(\"queue[0][an]\",\"event_logging\");w.append(\"queue[0][d]\",JSON.stringify(f.items));w.append(\"__protocol\",\n\"5\");sessionStorage.getItem(\"window_id\")&&h.push(\"window_id=\"+sessionStorage.getItem(\"window_id\"));f=\"?\"+h.join(\"&\");h=window.XMLHttpRequest?new XMLHttpRequest:new ActiveXObject(\"Microsoft.XMLHTTP\");h.open(\"POST\",f);h.onload=q;h.onerror=v;h.onabort=v;h.setRequestHeader(\"X-Requested-With\",\"XMLHttpRequest\");h.send(w)}}(),F=function(f){var q=g.getStages();return Promise.resolve().then(function(){return g.getParsedNativeLogs(f)}).then(function(v){var h=b(q,v);g.reset();if(0<h.length)return(new Promise(function(w,\nx){C({status:0,items:h},w,x)})).catch(function(w){})})},S=function(f){return[function(q,v){q.textContent=\"Reload\";q.onclick=function(){g.error(n.self_heal_screen_show,g.RELOAD_BY_USER,Error(\"Error - application reloaded\"),1);v();F(n.self_heal_screen_show).then(function(){return f()})};return q},function(q,v){q.textContent=\"Clear and Restart\";q.onclick=function(){g.error(n.self_heal_screen_show,g.RESTART,Error(\"Error: Restart by user\"),1);v();F(n.self_heal_screen_show).then(function(){return K()}).then(function(){H()})};\nreturn q}]},Q=function(){g.getRunId();++g.attempts;var f=function(h){var w=Number(g.attempts);y(r.core.concat(D[\"cache-core\"]),h,function(x){switch(0<w){case 3<=w:x.et=n.self_heal_not_helped;u(x,g.CANNOT_LOAD_JS_FILES);break;case 2===w:c().then(function(){g.error(n.self_heal_applied,g.RETRY_LOAD_JS_FILES,x,1);g.canReloadPage()?N():Q()});break;case 2>w:g.error(n.self_heal_applied,g.RETRY_LOAD_JS_FILES,x),Q()}},g.canReloadPage()&&(3<=w||g.forceIgnoreCache))},q=function(h){var w=y.bind(null,D[\"cache-theme\"],\nh);w(function(){w(function(x){g.error(n.self_heal_applied,g.RETRY_LOAD_THEMES,x||[\"empty urls\"]);return h()},!0)})},v=function(){try{var h=app.DebugLogger.getInstance();window.setOfscDebugModes=h.setOfscDebugModes.bind(h);var w=new app.AppFactory(y,window.ofsFiles,g),x=app.Main.createApp(w,u);toa.VDom.render(toa.VDom.createElement(x),document.getElementById(\"root\"))}catch(B){try{toa.VDom.unmountComponentAtNode(document.getElementById(\"root\"))}catch(E){}g.forceIgnoreCache=!0;if(!g.hasError(g.NOT_ENOUGH_DATA_FOR_START))return p(g,\nB,g.ERROR_CREATE_MAIN);B.et=n.self_heal_applied;u(B,g.NOT_ENOUGH_DATA_FOR_START)}};try{f.bind(null,q.bind(null,v))()}catch(h){p(g,h,g.NOT_ENOUGH_DATA_FOR_START)}};this.clearCacheAndReload=function(){return c().then(function(){if(g&&g.canReloadPage())return N();throw Error(\"can not reload page\");})};Object.defineProperty(window,\"ofscBigFontSize\",{get:function(){return document.documentElement.classList.contains(\"apply-a11y-font\")},set:function(f){document.documentElement.classList.toggle(\"apply-a11y-font\",\n!!f);defineTextSize()}});window.onload=function(){try{window.bridge=window.bridge||new OfscMobileAdapter(localStorage,g)}catch(f){}Q()}};var OfscMobileAdapter=function(){function l(a,b){this._isDeviceReady=!1;this._deviceReadyPromise=(new Promise(function(c,d){this._resolveDeviceReady=c;this._rejectDeviceReady=d}.bind(this))).catch(function(){return Promise.resolve({deviceReady:!1})});if(!this.isMaf())return this._rejectDeviceReady(),this;this._localStorage=a;this._trackerLoader=b;(this._isDeviceReady=this._checkIsDeviceActuallyReady())?this._resolveDeviceReady({deviceReady:!0}):this._setDeviceReadyListener();this._setURIOpenEventListener();\nthis._setNotificationTapListener();this._setReceiverAppTokenListener();this._setChangeApplicationVisibilityListener();this._setCollabNativeAppSiriIntegratorListener();this._setInteractiveScreenDataUpdateRequiredListener();return this}var J=function(){var a=0;return function(){return++a}}();l.prototype={getAndroidAppendUserAgent(){if(!this.isMaf()||!ofscMobile.isAndroid())return null;const a=navigator.userAgent.match(/.*(\\(com.oracle.ofsc\\/.*\\/android\\)).*/);return a&&a[1]||null},clearCacheAndRedirect:function(a,\nb,c){\"object\"===typeof ofscMobileCacheManager&&ofscMobileCacheManager.clearCacheAndRedirect&&ofscMobileCacheManager.clearCacheAndRedirect(a,b,c)},showRestorePage:function(a,b,c,d,k,G){},_setDeviceReadyListener:function(){document.addEventListener(\"deviceready\",this._onDeviceReady.bind(this),!1)},getDeviceReadyPromise:function(){return this._deviceReadyPromise},_setURIOpenEventListener:function(){document.addEventListener(\"ofscMobileDeepLink.customSchemeUriOpen\",this._onURIOpenEvent.bind(this),!1);\ndocument.addEventListener(\"ofscMobileDeepLink.registeredUriOpen\",this._onURIOpenEvent.bind(this),!1)},_setNotificationTapListener:function(){document.addEventListener(\"ofscMobileNotification.localNotificationTap\",this._onNotificationTap.bind(this),!1)},_setReceiverAppTokenListener:function(){document.addEventListener(\"ofscMobileRemoteNotification.receiveAppToken\",this._onReceiveAppToken.bind(this),!1)},_setChangeApplicationVisibilityListener:function(){document.addEventListener(\"ofscMobile.changeApplicationVisibility\",\nthis._changeApplicationVisibility.bind(this),!1)},_addSiriCapacitorListener:function(){var a=this.getCollaborationEventsPlugin();a&&a.removeAllListeners().then(function(){a&&a.addListener(\"messageIntentRequest\",this._onCollaborationNativeAppEventReceived.bind(this),!1)}.bind(this)).catch(function(){a&&a.addListener(\"messageIntentRequest\",this._onCollaborationNativeAppEventReceived.bind(this),!1)}.bind(this))},_setCollabNativeAppSiriIntegratorListener:function(){this.isMafDeviceReady()?this._addSiriCapacitorListener():\nthis.getDeviceReadyPromise().then(function(a){this._addSiriCapacitorListener()}.bind(this))},_setInteractiveScreenDataUpdateRequiredListener:function(){document.addEventListener(\"ofscMobile.setNativeDataUpdateRequired\",this._interactiveScreenDataUpdateRequired.bind(this),!1)},isMaf:function(){return window.isMaf()},isMafDeviceReady:function(){this._isDeviceReady=this._checkIsDeviceActuallyReady();return this.isMaf()&&this._isDeviceReady},getSID:function(){return _DATA.sessid},getVersionAPI:function(){if(!this._isDeviceReady)throw app.DebugLogger.warn(\"Adapter: Ofsc Mobile Object is not ready yet!\",\n\"ofscMobileAdapter\"),Error(\"Device is not ready yet\");return ofscMobile.getVersionAPI()},showAbout:function(){\"object\"===typeof ofscMobile&&ofscMobile.showAbout(this._showAboutOnSuccess,this._showAboutOnError,this._getShowAboutData())},getGeolocationService:function(){if(!this._isDeviceReady)throw Error(\"Device is not ready yet\");return ofscMobileGeolocation},getBarcodeScannerService:function(){if(!this._isDeviceReady)throw app.DebugLogger.warn(\"Adapter: Native barcode scanner service is not ready yet!\",\n\"ofscMobileAdapter\"),Error(\"Device is not ready yet\");return ofscBarcodeScanner},getMobileCameraService:function(){if(!this.isMobileCameraAvailable())throw app.DebugLogger.warn(\"Adapter: ofscMobileCamera is not available\",\"ofscMobileAdapter\"),Error(\"Device is not ready yet\");app.DebugLogger.log(\"Adapter: Service: Mobile Camera Service is ready.\",\"ofscMobileAdapter\");return ofscMobileCamera},getMobileNotificationService:function(){if(!this._isDeviceReady)throw app.DebugLogger.warn(\"Adapter: Native mobile notification service is not ready yet!\",\n\"ofscMobileAdapter\"),Error(\"Device is not ready yet\");return ofscMobileNotification},getMobileRemoteNotificationService:function(){if(!this._isDeviceReady)throw app.DebugLogger.warn(\"Adapter: Native mobile remote notification service is not ready yet!\",\"ofscMobileAdapter\"),Error(\"Device is not ready yet\");return ofscMobileRemoteNotification},isMobileAvailable:function(){try{ofscMobile}catch(a){return app.DebugLogger.warn(\"Adapter: Native Mobile is not available!\",\"ofscMobileAdapter\"),!1}return!0},\nisGeolocationAvailable:function(){try{ofscMobileGeolocation}catch(a){return app.DebugLogger.warn(\"Adapter: Native Geolocation Service is not available!\",\"ofscMobileAdapter\"),!1}return!0},isBarcodeScannerAvailable:function(){try{ofscBarcodeScanner}catch(a){return app.DebugLogger.warn(\"Adapter: Native Barcode Scanner Service is not available!\",\"ofscMobileAdapter\"),!1}return!0},isMobileCameraAvailable:function(){if(!this.isMafDeviceReady())return app.DebugLogger.warn(\"Adapter: MAF is not ready yet.\",\n\"ofscMobileAdapter\"),!1;try{ofscMobileCamera}catch(a){return app.DebugLogger.warn(\"Adapter: Native Mobile Camera Service is not available!\",\"ofscMobileAdapter\"),!1}return!0},isOfscMobileSecurityTabAvailable:function(){if(!this.isMafDeviceReady())return app.DebugLogger.warn(\"Adapter: MAF is not ready yet.\",\"ofscMobileAdapter\"),!1;try{ofscMobileSecurityTab}catch(a){return app.DebugLogger.warn(\"Adapter: Native Mobile Security Tab Service is not available!\",\"ofscMobileAdapter\"),!1}return!0},openSecurityTab:function(a,\nb,c){this.isOfscMobileSecurityTabAvailable()&&(b||(b=function(){}),c||(c=function(){}),ofscMobileSecurityTab._openUrl(b,c,a))},closeSecurityTab:function(a,b){this.isOfscMobileSecurityTabAvailable()&&(a||(a=function(){}),b||(b=function(){}),ofscMobileSecurityTab._close(a,b))},isMobileNotificationAvailable:function(){try{ofscMobileNotification}catch(a){return app.DebugLogger.warn(\"Adapter: Native Mobile Notification Service is not available!\",\"ofscMobileAdapter\"),!1}return!0},isMobileRemoteNotificationAvailable:function(){try{ofscMobileRemoteNotification}catch(a){return app.DebugLogger.warn(\"Adapter: Native Mobile Remote Notification Service is not available!\",\n\"ofscMobileAdapter\"),!1}return!0},getApplicationVisibility:function(){var a=\"\";this.isMafDeviceReady()&&this.isMobileAvailable()&&3<=ofscMobile.getVersionAPI()&&(a=ofscMobile.getApplicationVisibility());return a},removeAccessToken:function(){this.isMaf()&&this._localStorage.getItem(\"access_token\")&&this._localStorage.removeItem(\"access_token\");this.notify(\"ofscMobileAdapter.removeAccessToken\")},openExternalUrl:function(a){this.isMafDeviceReady()&&cordova.InAppBrowser.open(a,\"_system\")},isMafPrinterAvailable:function(){if(this.isMafDeviceReady()){try{cordova.plugins.printer.print}catch(a){return console.warn(\"Printer Plugin not available. Please update your app\"),\n!1}return!0}return!1},printContent:function(a,b,c){this.isMafPrinterAvailable()?cordova.plugins.printer.print(a,b,c):c()},printDocument:function(a,b){return this.isMafPrinterAvailable()?new Promise((c,d)=>{try{cordova.plugins.printer.print(a,b,c)}catch(k){d(k)}}):Promise.reject(\"printer plugin is not available\")},shareWithOptions:function(a,b,c){this.isMafDeviceReady()&&\"undefined\"!==typeof window.plugins.socialsharing&&ofscMobileSocialsharing.shareWithOptions(a,b,c)},shareHTMLContent:function(a,\nb,c,d){this.isMafDeviceReady()&&ofscMobileSocialsharing.shareHTMLContent(a,b,c,d)},isDeviceAndroid:function(){var a=!1;this.isMafDeviceReady()&&(a=\"android\"===cordova.platformId);return a},isNfcAvailable:function(){return window.ofscMobileNFCScanner.isNfcAvailable()},isNfcEnabled:function(){return new Promise(function(a,b){window.ofscMobileNFCScanner.isNfcEnabled(a,b)})},scanNfcTag:function(a=\"\"){let b={fieldName:a};return new Promise(function(c,d){window.ofscMobileNFCScanner.scan(c,d,b)})},isDrawOnImageShouldHide:function(){const a=\n$app.model().featureToggler().isFeatureEnabled(\"in_app_camera_switch\"),b=this.isMaf()&&window.navigator&&\"string\"===typeof window.navigator.appVersion&&window.navigator.appVersion.match(/com.oracle.ofsc\\/(\\d+)\\.(\\d+)\\./);return a&&b&&(22===parseInt(b[1],10)&&8<=parseInt(b[2],10)||22<parseInt(b[1],10))},isMobile:function(){return navigator&&navigator.userAgent&&/Mobile|webOS|BlackBerry|IEMobile|MeeGo|mini|Fennec|Windows Phone|Android|iP(ad|od|hone)/i.test(navigator.userAgent)},requestDataExport:function(a,\nb){this.isMafDeviceReady()&&(a.match(/^https?:/i)||(a=$app.model().urlService().getFrontendServerUrl()+\"mobility/?\"+a),\"undefined\"!==typeof b&&0<b.length&&(a=a+\"&\"+b),a=a+\"&\"+this.getSID(),cordova.InAppBrowser.open(a,\"_system\",\"location=yes,enableViewportScale=yes\"))},downloadFile:function(a,b){this.isMafDeviceReady()&&(a.match(/^https?:/i)||(a=$app.model().urlService().getFrontendServerUrl()+\"mobility/\"+a),ofscMobile.getVersionAPI()>=this.filePluginVersion()?window.ofscMobileFile.downloadFromServer(function(){},\nfunction(c){},a,b):\"ios\"===cordova.platformId?cordova.InAppBrowser.open(a,\"_blank\",\"location=yes,enableViewportScale=yes\"):window.ofscFileDownloader.download(function(){},function(c){},a))},downloadBlobFile:function(a,b){this.isMafDeviceReady()&&window.ofscMobileFile.downloadFromBrowserStorage(function(){},function(c){},a,b)},filePluginVersion:function(){return 9},isMultiPictureAvailable:function(){return\"object\"!==typeof ofscMobileCamera||\"function\"!==typeof ofscMobileCamera.takeMultiPicture?!1:\n!0},isTakeFilesAvailable:function(){return\"object\"===typeof FileUploadPlugin&&\"function\"===typeof FileUploadPlugin.takeFiles},takeMultiPicture:function(a){return new Promise((b,c)=>{this.isMultiPictureAvailable()?ofscMobileCamera.takeMultiPicture(b,c,a):c(\"Multiple picture is not available!\")})},takeFiles:function(a){console.log(\"takeFiles ofsMobileAdapter called with: \",a);return new Promise((b,c)=>{if(this.isTakeFilesAvailable())return window.tf?b(window.tf):FileUploadPlugin.takeFiles(b,c,a);c(\"Take Files is not available!\")})},\ndiscardFiles(a=[]){return new Promise((b,c)=>{try{if(\"object\"!==typeof FileUploadPlugin)throw Error(\"FileUploadPlugin is not object\");return FileUploadPlugin.discardFiles(a,b,c)}catch(d){return Promise.reject(d)}})},renameFiles(a=[]){return new Promise((b,c)=>{try{if(\"object\"!==typeof FileUploadPlugin)throw Error(\"FileUploadPlugin is not object\");return FileUploadPlugin.renameFiles(a,b,c)}catch(d){return Promise.reject(d)}})},uploadMultiPictures:function(a,b){return new Promise((c,d)=>{this.isMultiPictureAvailable()?\nofscMobileCamera.uploadMultiPictures(c,d,a,b):d(\"Multiple picture is not available!\")})},removeMultiPicture:function(a){return new Promise((b,c)=>{this.isMultiPictureAvailable()?ofscMobileCamera.removeMultiPicture(b,c,a):c(\"Multiple picture is not available!\")})},getUploadingStatuses:function(a){return new Promise((b,c)=>{this.isMultiPictureAvailable()?ofscMobileCamera.getUploadingStatuses(b,c,a):c(\"Multiple picture is not available!\")})},recreateSprite:function(a){return new Promise((b,c)=>{this.isMultiPictureAvailable()?\nofscMobileCamera.recreateSprite(b,c,a):c(\"Multiple picture is not available!\")})},provideJwtForMultiImage:function(a){return new Promise((b,c)=>{this.isMultiPictureAvailable()?ofscMobileCamera.provideJwtForMultiImage(b,c,a):c(\"Multiple picture is not available!\")})},isUploadingStatus:function(){return new Promise((a,b)=>{this.isMultiPictureAvailable()?ofscMobileCamera.isUploadingStatus(a,b):b(\"Multiple picture is not available!\")})},storeHtmlAsPdf:function(a,b){return new Promise((c,d)=>{FileUploadPlugin?\n(FileUploadPlugin.generateAndStoreFile||FileUploadPlugin.generateAndStorePDF)(a,b,function(k){console.info(\"storeHtmlAsPdf generated and stored.\\n\"+k);c(k)},function(k){console.error(\"storeHtmlAsPdf error\"+k);d(\"Pdf generation failed! \\n\"+k)}):d(\"Pdf uploader is not available!\")})},canGeneratePDF(){return\"object\"===typeof FileUploadPlugin&&(\"function\"===typeof FileUploadPlugin.generateAndStoreFile||\"function\"===typeof FileUploadPlugin.generateAndStorePDF)},getFileInfo(a){return this.getUploadState(a).then(b=>\nb&&\"unavailable\"!==b.status?this.getPdfUrl(a):null)},getPdfUrl:function(a){return new Promise((b,c)=>{FileUploadPlugin?FileUploadPlugin.get(a,b,function(d){console.error(\"getPdfUrl error\"+d);c(\"Pdf generation failed! \\n\"+d)}):c(\"Pdf uploader is not available!\")})},getUploadState:function(a){return new Promise((b,c)=>{FileUploadPlugin?FileUploadPlugin.getStatus(a,b,d=>{if(\"FileId not found Exception\"===d)return b(null);console.error(\"getUploadState error\"+d);c(d)}):c(\"Pdf uploader is not available!\")})},\nsync(a){return new Promise((b,c)=>{try{if(\"object\"!==typeof FileUploadPlugin)throw Error(\"FileUploadPlugin is not object\");return 22<=ofscMobile.getVersionAPI()?FileUploadPlugin.sync(a,b,c):FileUploadPlugin.sync(a[0].fileUidOnDevice,a[0],b,c)}catch(d){c(d)}})},_makeCapturePhoto:function(a,b){this.isMafDeviceReady()&&(ofscMobile.getVersionAPI()>=this.filePluginVersion()?ofscMobileCamera.takePhoto(function(c){b.call(this,a,c)},function(c){console.error(\"app.OfscMobileAdapter\",\"capturePhoto: \"+c)},{useInAppCamera:$app.model().featureToggler().isFeatureEnabled(\"in_app_camera_switch\")}):\nnavigator.camera.getPicture(function(c){ofscFileDownloader.getBlob(function(d){d=new File([d],c.replace(/^.*[\\\\/]/,\"\"),{type:\"image/jpg\"});b.call(this,a,d)},function(d){console.error(\"app.OfscMobileAdapter\",\"capturePhoto: \"+d)},c.replace(\"file://\",\"\"))},function(c){},{quality:50,destinationType:navigator.camera.DestinationType.FILE_URI,correctOrientation:!0,useInAppCamera:$app.model().featureToggler().isFeatureEnabled(\"in_app_camera_switch\")}))},getCollaborationEventsPlugin:function(){if(Capacitor&&\nCapacitor.Plugins.CollaborationEvents)return Capacitor.Plugins.CollaborationEvents},capturePhoto:function(a,b){this._makeCapturePhoto(a,function(c,d){if(b||\"function\"===typeof c.onchange){var k=new Event(\"change\");k.cordovaFileData=d;c.dispatchEvent(k)}})},capturePhotoForCollaboration:function(a){this._makeCapturePhoto(a,function(b,c){$(b).prop(\"cordovaFileData\",c).trigger(\"change\")})},_makeSelectFile:function(a,b){this.isMafDeviceReady()&&ofscMobileFile.pickUp(function(c){b.call(this,a,c)},function(c){console.error(\"app.OfscMobileAdapter\",\n\"_makeSelectFile: \"+c)})},selectFile:function(a,b){this._makeSelectFile(a,function(c,d){if(b||\"function\"===typeof c.onchange){var k=new Event(\"change\");k.cordovaFileData=d;c.dispatchEvent(k)}})},openXsltLinksInMaf:function(a){if(this.isMafDeviceReady()){var b=(new DOMParser).parseFromString(a,\"text/xml\").documentElement;if(\"a\"===b.nodeName){var c=b.getAttribute(\"href\").replace(/'/g,\"\\'\");if(\"javascript\"!==c.split(\":\")[0])return b.setAttribute(\"href\",`javascript: $app.model().ofscMobileAdapter().openExternalUrl('${c}')`),\nb.outerHTML}}return a},sendFormInExternalBrowser:function(a){this.isMafDeviceReady()&&a&&\"object\"===typeof a&&ofscMobile.openHTMLInExternalBrowser(function(){},function(b){},'<html><head><meta charset=\"UTF-8\"></head><body onload=\"document.forms[0].submit()\">'+a.outerHTML+\"</body></html>\")},getCurrentLocation:function(){return new Promise(function(a,b){this.isMafDeviceReady()?ofscMobileGeolocation.getLocation(function(c){return a({coords:{latitude:c.latitude,longitude:c.longitude}})}.bind(this),function(c){b()}.bind(this)):\nb(Error(\"app.OfscMobileAdapter.getCurrentLocation: MAF device is not ready\"))}.bind(this))},isIos:function(){return this.isMafDeviceReady()&&\"ios\"===cordova.platformId},isAndroid:function(){return this.isMafDeviceReady()&&\"android\"===cordova.platformId},showAppUpdateIfAvailable:function(){if(!this._isDeviceReady)throw app.DebugLogger.warn(\"Device is not ready yet\",\"ofscMobileAdapter\"),Error(\"Device is not ready yet\");return ofscMobile.showUpdateIfAvailable&&ofscMobile.showUpdateIfAvailable(function(a){},\nfunction(a){},window.pv)},getMobileAppVersion:function(){return new Promise(function(a,b){\"object\"===typeof ofscMobile?ofscMobile._getMobileVersion(function(c){a(c)},function(c){b(\"ERROR\")}):b(\"getMobileAppVersion can be called only from mobile device\")})},showNativeAppRating:function(){this.isMafDeviceReady()&&(\"undefined\"!==typeof LaunchReview?LaunchReview.isRatingSupported()?LaunchReview.rating():LaunchReview.launch():app.native.utils.NativeUtil.OPEN_APP_IN_STORE(this.isAndroid()))},setNativeInteractiveScreenData(a){return this.isMobileAvailable()?\nvoid 0===ofscMobile.setNativeInteractiveScreenData?Promise.reject(Error(\"ofscMobile.setNativeInteractiveScreenData is not defined\")):new Promise((b,c)=>ofscMobile.setNativeInteractiveScreenData(b,c,a)):Promise.reject(Error(\"ofscMobile is not available\"))},setNativeDataUpdateStatus(a){return this.isMobileAvailable()?void 0===ofscMobile.setNativeDataUpdateStatus?Promise.reject(Error(\"ofscMobile.setNativeDataUpdateStatus is not defined\")):new Promise((b,c)=>ofscMobile.setNativeDataUpdateStatus(b,c,a)):\nPromise.reject(Error(\"ofscMobile is not available\"))},_getShowAboutData:function(){return{instanceName:$app.storage().getMetaData(\"instanceId\"),userName:$app.model().user().get(\"uname\"),version:app.context.getStringVersion()}},_onDeviceReady:function(){this._isDeviceReady=!0;this.notify(\"maf.deviceReady\");this._resolveDeviceReady({deviceReady:!0})},_onURIOpenEvent:function(a){$app.navigation().processDeepLink(a.data,!0)},_onNotificationTap:function(a){try{var b=JSON.parse(a.data);this.notify(\"maf.localNotificationTap\",\nb)}catch(c){this._logHelper.logWarning(c)}},_onReceiveAppToken:function(a){try{var b=JSON.parse(a.data);this.notify(\"maf.receiveAppToken\",b)}catch(c){this._logHelper.logWarning(c)}},_onCollaborationNativeAppEventReceived:function(a){try{this.notify(\"maf.nativeAppCollaborationEvent\",a)}catch(b){this._logHelper.logWarning(b)}},_changeApplicationVisibility:function(a){try{this.notify(\"maf.changeApplicationVisibility\",a.visibility)}catch(b){this._logHelper.logWarning(b)}},_interactiveScreenDataUpdateRequired:function(a){try{this.notify(\"maf.setNativeDataUpdateRequired\",\na.data)}catch(b){this._logHelper.logWarning(b)}},_setInitData:function(){return window.ofscMobile&&window.ofscMobile.init?(new Promise(function(a,b){ofscMobile.init(a,b,{userId:$app.model().user().getId().toString(),enableLogging:!0})})).catch(function(a){app.DebugLogger.log(\"Error occurred while setting init data\",\"general\",a)}):Promise.resolve()},initNativeLoggingService:function(){this._nativeLoggingService=new app.native.logger.NativeLoggingService(this);this._nativeLoggingService.startNativeLogsMonitor()},\nisLogsApiAvailable:function(){return!(!window.ofscMobileLogger||!window.ofscMobileLogger.getLogs||!this.isIos()&&!this._isLogsAvailableForAndroid())},_isLogsAvailableForAndroid:function(){return 16<=window.ofscMobile.getVersionAPI()},getLogs:function(){return new Promise(function(a,b){ofscMobileLogger.getLogs(a,b)})},clearLogs:function(a){return new Promise(function(b,c){ofscMobileLogger.clearLogs(b,c,a)})},feedbackStorageAPIAvailable:function(){return\"object\"!==typeof ofscMobileOffline||\"function\"!==\ntypeof ofscMobileOffline.setFeedbackDate?!1:!0},setFeedbackDate:function(a,b){\"object\"===typeof ofscMobileOffline&&\"function\"===typeof ofscMobileOffline.setFeedbackDate&&ofscMobileOffline.setFeedbackDate(null,function(c){app.DebugLogger.warn(\"setFeedbackDate: Unable to store the date \",\"ofscMobileAdapter\")},a.toString(),b.toString())},getFeedbackDate:function(a){return new Promise(function(b,c){this.isMafDeviceReady()?\"object\"!==typeof ofscMobileOffline||\"function\"!==typeof ofscMobileOffline.getFeedbackDate?\nc(Error(\"app.OfscMobileAdapter.getFeedbackDate: API not available\")):ofscMobileOffline.getFeedbackDate(function(d){d&&\"string\"===typeof d&&(d=parseInt(d));b(d)},function(d){c()},a.toString()):c(Error(\"app.OfscMobileAdapter.getFeedbackDate: MAF device is not ready\"))}.bind(this))},getTrackerLoader:function(){return this._trackerLoader},_checkIsDeviceActuallyReady:function(){return window.isMafReady},_showAboutOnSuccess:function(){},_showAboutOnError:function(a){app.DebugLogger.error(a,\"ofscMobileAdapter\")},\naddListener:function(a,b,c){if(\"[object String]\"!==Object.prototype.toString.call(a))throw Error(\"Invalid argument event\");if(\"[object Function]\"!==Object.prototype.toString.call(b))throw Error(\"Invalid argument callback\");this._events=this._events||{};this._events_uids=this._events_uids||{};var d;(this._events[a]=this._events[a]||[]).push(d=J(),b,c);this._events_uids[d]=a;return d},addListenerOnce:function(a,b,c){var d,k=this;return d=k.addListener(a,function(){k.removeListener(d);b.apply(this,arguments)},\nc)},removeListener:function(a){if(\"[object Number]\"!==Object.prototype.toString.call(a)||!window.isFinite(a))throw Error(\"Invalid argument uid\");var b,c,d;if(this._events_uids&&(b=this._events_uids[a])&&(d=this._events[b])&&(c=d.length)){for(b=0;b<c;b+=3)if(a===d[b]){d.splice(b,3);break}delete this._events_uids[a]}},_removeAllListeners:function(){for(var a in this._events_uids)this._events_uids.hasOwnProperty(a)&&this.removeListener(parseInt(a,10))},notify:function(a){if(\"[object String]\"!==Object.prototype.toString.call(a))throw Error(\"Invalid argument event\");\nvar b,c,d;this._events=this._events||{};if(a in this._events&&(b=this._events[a])){b=b.slice();var k=0;for(c=b.length;k<c;k+=3){var G=b[k+1];var K=b[k+2]||this;try{G.apply(K,arguments)}catch(H){console&&console.error(H)}}}if(\"all\"in this._events&&(d=this._events.all))for(d=d.slice(),k=0,c=d.length;k<c;k+=3){G=d[k+1];K=d[k+2]||this;try{G.apply(K,arguments)}catch(H){console&&console.error(H)}}}};return l}();(function(l){var J=function(){function a(u,p,r,D,y){p=p||c;r=r||c;u=Array.isArray(u)?u:[];if(0===u.length)return p();var n={loaded:[],fail:[],done:!1,timeout:12E4,force:y},g=(new Date).getTime(),N=function(C){return D?C+(-1!==C.indexOf(\"?\")?\"&\":\"?\")+\"ignoreCache=\"+g:C};n.onDone=function(){n.timeoutId&&clearTimeout(n.timeoutId);n.done||(n.done=!0,p())};n.onError=function(C){if(!n.done){n.done=!0;C=Array.isArray(C)?C:[String(C)];var F=Error(\"not load:\"+C.join(\";\"));F.resources=C;r(F)}};n.timeoutId=\nsetTimeout(n.onError.bind(n,u),n.timeout);y=L.bind(null,u,n);u=u.reduce(function(C,F){F=String(F);/\\.js/.test(F)?C.scripts.push(N(F)):C.links.push(N(F));return C},{scripts:[],links:[]});H(G,u.links,y,n);H(k,u.scripts,y,n)}var b=document.head,c=function(){},d={},k=function(u,p){var r=document.createElement(\"script\");r.async=!1;r.type=\"text/javascript\";r.src=u;r.onload=p.bind(null,u,!0);r.onerror=p.bind(null,u,!1);document.body.appendChild(r)},G=function(u,p){var r=document.createElement(\"link\");r.rel=\n\"stylesheet\";r.type=\"text/css\";r.href=u;r.onload=p.bind(null,u,!0);r.onerror=p.bind(null,u,!1);b.appendChild(r)},K=function(u,p,r,D,y){y?r.loaded.push(D):r.fail.push(D);y&&(d[D]=1);p.length<=r.loaded.length+r.fail.length&&u()},H=function(u,p,r,D){r=K.bind(null,r,p,D);for(var y=0,n=p.length;y<n;++y)!D.force&&d[p[y]]?r(p[y],!0):u([p[y]],r)},L=function(u,p){!p.done&&u.length<=p.loaded.length+p.fail.length&&(0<p.fail.length?p.onError(p.fail):p.onDone())};return function g(p,r,D,y,n){p=(p||[]).concat([]);\na(p.splice(0,100),function(){0<p.length?g(p,r,D,y,n):r()},D,y,n)}}();l.loader=J})(window);(function(l){function J(){}J.prototype.disableCache=function(){return this.loadIframe(\"index.php?m=user&a=disableAppCache&ignoreCache=\"+(new Date).getTime())};J.prototype.enableCache=function(){return this.loadIframe(\"index.php?m=user&a=enableAppCache&ignoreCache=\"+(new Date).getTime())};J.prototype.loadIframe=function(a){return window.applicationCache?Promise.resolve().then(function(){var b=0,c=document.createElement(\"iframe\");c.style.visibility=\"hidden\";c.style.position=\"absolute\";c.style.left=\n\"-9999px\";var d=function(k){if(15<b)return k(!1);++b;try{if(c.contentWindow&&c.contentWindow.ofsCacheCompleted)return k(!0)}catch(G){console.error(G)}setTimeout(d.bind(null,k),2E3)};return new Promise(function(k){try{applicationCache.abort()}catch(L){}var G=setTimeout(k.bind(null,!1),3E4),K=function(){try{clearTimeout(G),document.body.removeChild(c)}catch(L){console.error(L)}},H=null;c.onload=function(){H||(H=Promise.resolve().then(function(){return new Promise(d)}).then(function(L){try{applicationCache.swapCache()}catch(u){}K();\nk(L)}).catch(k.bind(null,!1)))};c.onerror=function(){K();k(!1)};c.src=a;document.body.appendChild(c)})}).catch(function(b){console.error(b);return!1}):Promise.resolve(!1)};l.applicationCacheService=new J})(window);\n\n        OfscIndex(\n            {\"core\":[\"..\\/r2601.280.26.04.40544\\/mobile\\/js\\/package.js\"],\"base_configuration\":[\"\\/mobility\\/configuration\\/telefonica-cl\\/2601.280.26.04.40544\\/enum\\/159\\/2\\/1509125879.js\",\"\\/mobility\\/configuration\\/telefonica-cl\\/2601.280.26.04.40544\\/profile\\/159\\/2\\/1080506854.js\"],\"additional_configuration\":[\"\\/mobility\\/configuration\\/telefonica-cl\\/2601.280.26.04.40544\\/form\\/3576155794\\/2\\/2069372558.js?label=F_AUTORIZAR_NO_REALIDO\",\"\\/mobility\\/configuration\\/telefonica-cl\\/2601.280.26.04.40544\\/form\\/3927213390\\/2\\/3780803704.js?label=F_DESAUTORIZAR_NO_REALIZADO\",\"\\/mobility\\/configuration\\/telefonica-cl\\/2601.280.26.04.40544\\/form\\/2087255618\\/2\\/927970075.js?label=F_AUTORIZAR_SUSPENDER\",\"\\/mobility\\/configuration\\/telefonica-cl\\/2601.280.26.04.40544\\/form\\/3692271798\\/2\\/2988623220.js?label=A_Comentario\",\"\\/mobility\\/configuration\\/telefonica-cl\\/2601.280.26.04.40544\\/form\\/1144197687\\/2\\/2322622185.js?label=F_DESAUTORIZAR_SUSPENDER\",\"\\/mobility\\/configuration\\/telefonica-cl\\/2601.280.26.04.40544\\/form\\/486268831\\/2\\/426624077.js?label=mobile_provider_request%23103%2315\"],\"additional_scripts\":\"\",\"fallback_layouts\":[\"\\/mobility\\/configuration\\/telefonica-cl\\/2601.280.26.04.40544\\/layout\\/792031881\\/2\\/3814904166.js?label=mobile_supervisor&lw=1\"]},\n            {\"cache-core\":[\"..\\/r2601.280.26.04.40544\\/mobile\\/css\\/package.css\",\"..\\/r2601.280.26.04.40544\\/mobile\\/css\\/mobile.css\",\"..\\/r2601.280.26.04.40544\\/shared\\/css\\/all.min.css\"],\"cache-theme\":[\"..\\/r2601.280.26.04.40544\\/shared\\/mobiletheme\\/telefonica-cl\\/20220601213725\\/themetelefonicachile\\/themetelefonicachile.css\"]},\n            \"https:\\/\\/telefonica-cl.etadirect.com\\/logout\\/?AuthId=toa_._telefonica-cl_.__._manage&loginpolicy=politicatelefonica&auth_ticket=21bf066a29f389f5a7dce811b22f0736&instance_id=telefonica-cl&domain=telefonica-cl.etadirect.com\"        )\n    } catch(error) {\n        console.log(error);\n    }"
+  },
+  {
+    "class": "search-preference-header",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Buscar"
+  },
+  {
+    "class": "search-bar-input-hint-text",
+    "id": "",
+    "tag": "DIV",
+    "text": "Buscar en actividades"
+  },
+  {
+    "class": "info-display-header-title",
+    "id": "",
+    "tag": "DIV",
+    "text": "Catálogo de piezas fuera de línea"
+  },
+  {
+    "class": "info-display-header-status",
+    "id": "",
+    "tag": "DIV",
+    "text": "- Inicialización"
+  },
+  {
+    "class": "search-preference-header",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Buscar preferencias"
+  },
+  {
+    "class": "oj-complete",
+    "id": "customer_number_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "RUT del Cliente"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "appt_number_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "Numero de Petición"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "144_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "Numero orden"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "cname_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "Nombre"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "cemail_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "Correo electronico"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "cphone_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "Telefono"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "ccell_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "Telefono Contacto 1"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "414_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "AccessId"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "272_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "Direccion"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "155_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "Canal de Origen"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "invsn_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "Número de Serie"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "434_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "ID SIOM"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-complete",
+    "id": "143_draghandle_label",
+    "tag": "OJ-OPTION",
+    "text": "Tipo Trabajo"
+  },
+  {
+    "class": "preference-type",
+    "id": "",
+    "tag": "DIV",
+    "text": "Inventario"
+  },
+  {
+    "class": "oj-helper-hidden-accessible",
+    "id": "ui-id-1:loadingDesc",
+    "tag": "DIV",
+    "text": "Cargado"
+  },
+  {
+    "class": "search-activity-only-info",
+    "id": "",
+    "tag": "DIV",
+    "text": "La búsqueda solo es aplicable a actividades"
+  },
+  {
+    "class": "search-date-title",
+    "id": "",
+    "tag": "DIV",
+    "text": "Fecha"
+  },
+  {
+    "class": "search-date-description",
+    "id": "",
+    "tag": "DIV",
+    "text": "En los resultados de búsqueda solo se mostrarán las fechas seleccionadas relacionadas con la actividad"
+  },
+  {
+    "class": "oj-select-chosen",
+    "id": "search-date-select_selected",
+    "tag": "SPAN",
+    "text": "sin restricción de tiempo"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Comenzando hoy"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Comenzado dos dias después"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Comenzado 7 dias después"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "SPAN",
+    "text": "Comenzado 30 dias después"
+  },
+  {
+    "class": "",
+    "id": "",
+    "tag": "SPAN",
+    "text": "sin restricción de tiempo"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-1",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar recursos/grupos/buckets inactivos"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-2",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar recursos con dias de trabajo no laborables"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-3",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar proveedores con rutas de trabajo no activadas"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-4",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar proveedores con rutas de trabajo activas"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-5",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar proveedores con rutas de trabajo terminadas"
+  },
+  {
+    "class": "toa-button toa-view-control-button toa-submit",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "Aplicar"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-1",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar recursos/grupos/buckets inactivos"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-2",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar recursos con dias de trabajo no laborables"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-3",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar proveedores con rutas de trabajo no activadas"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-4",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar proveedores con rutas de trabajo activas"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-5",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar proveedores con rutas de trabajo terminadas"
+  },
+  {
+    "class": "toa-button toa-view-control-button toa-submit",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "Aplicar"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-1",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar recursos/grupos/buckets inactivos"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-2",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar recursos con dias de trabajo no laborables"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-3",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar proveedores con rutas de trabajo no activadas"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-4",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar proveedores con rutas de trabajo activas"
+  },
+  {
+    "class": " toa-view-control-control text-resource-tree-filter",
+    "id": "resource-tree-filter-label-5",
+    "tag": "DIV",
+    "text": "Mostrar/ocultar proveedores con rutas de trabajo terminadas"
+  },
+  {
+    "class": "toa-button toa-view-control-button toa-submit",
+    "id": "",
+    "tag": "BUTTON",
+    "text": "Aplicar"
+  }
+]

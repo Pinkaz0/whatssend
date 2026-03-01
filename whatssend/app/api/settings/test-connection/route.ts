@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { UltraMsgClient } from '@/lib/ultramsg/client'
+import { createEvolutionClient } from '@/lib/whatsapp/evolution'
 
 /**
  * POST /api/settings/test-connection
@@ -16,20 +16,30 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { instanceId, token } = body as { instanceId: string; token: string }
+    const { instanceName } = body as { instanceName: string }
 
-    if (!instanceId || !token) {
+    const apiUrl = process.env.EVOLUTION_API_URL || 'https://api.empathaiapp.net'
+    const apiKey = process.env.EVOLUTION_API_KEY
+
+    if (!instanceName) {
       return NextResponse.json(
-        { error: 'Faltan instanceId y token' },
+        { error: 'Falta instanceName' },
         { status: 400 }
       )
     }
 
-    const client = new UltraMsgClient(instanceId, token)
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'API Key Global no configurada en el servidor (.env)' },
+        { status: 500 }
+      )
+    }
+
+    const client = createEvolutionClient(apiUrl, apiKey, instanceName)
     const result = await client.testConnection()
 
     if (result.ok) {
-      return NextResponse.json({ success: true, message: result.data.message })
+      return NextResponse.json({ success: true, message: 'Conectado a Evolution API' })
     } else {
       return NextResponse.json({ success: false, error: result.error }, { status: 400 })
     }

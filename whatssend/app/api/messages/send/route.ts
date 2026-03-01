@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createUltraMsgClient } from '@/lib/ultramsg/client'
+import { createEvolutionClient } from '@/lib/whatsapp/evolution'
 
 /**
  * POST /api/messages/send
@@ -35,14 +35,14 @@ export async function POST(request: NextRequest) {
     // 3. Verificar que el usuario es dueño del workspace
     const { data: workspace, error: wsError } = await supabase
       .from('workspaces')
-      .select('id, ultramsg_instance_id, ultramsg_token')
+      .select('id, evolution_instance')
       .eq('id', workspaceId)
       .eq('owner_id', user.id)
       .single()
 
-    if (wsError || !workspace) {
+    if (wsError || !workspace || !workspace.evolution_instance) {
       return NextResponse.json(
-        { error: 'Workspace no encontrado o sin permisos' },
+        { error: 'Workspace no encontrado o instancia no configurada' },
         { status: 403 }
       )
     }
@@ -83,26 +83,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 6. Enviar vía UltraMsg
+    // 6. Enviar vía Evolution API
     try {
-      const ultramsg = createUltraMsgClient(
-        workspace.ultramsg_instance_id,
-        workspace.ultramsg_token
+      const evolution = createEvolutionClient(
+        null,
+        null,
+        workspace.evolution_instance
       )
 
-      // Normalize phone before sending (remove +, spaces, etc if needed by UltraMsg)
-      // Assuming contact.phone is already in E.164, but stripping '+' is safer for some APIs
+      // Normalize phone before sending (remove +, spaces, etc)
       const cleanPhone = contact.phone.replace(/\D/g, '')
 
-      const result = await ultramsg.sendMessage(cleanPhone, message)
+      const result = await evolution.sendMessage(cleanPhone, message)
 
       if (result.ok) {
-        // 7. Actualizar estado a 'sent' con ID de UltraMsg
+        // 7. Actualizar estado a 'sent' con ID de Evolution
         await supabase
           .from('messages')
           .update({
             status: 'sent',
-            ultramsg_message_id: result.data.id || null,
+            evolution_message_id: result.data?.key?.id || null,
             sent_at: new Date().toISOString(),
           })
           .eq('id', msg.id)
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           success: true,
           messageId: msg.id,
-          ultramsgId: result.data.id,
+          evolutionId: result.data?.key?.id,
         })
       } else {
         // 8. Marcar como 'failed'
@@ -119,12 +119,12 @@ export async function POST(request: NextRequest) {
           .update({ status: 'failed' })
           .eq('id', msg.id)
 
-        console.error('[Send] UltraMsg send failed:', result.error)
+        console.error('[Send] Evolution API send failed:', result.error)
         return NextResponse.json(
           {
-            success: false,
-            messageId: msg.id,
-            error: result.error,
+             success: false,
+             messageId: msg.id,
+             error: result.error,
           },
           { status: 502 }
         )

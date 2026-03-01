@@ -22,7 +22,7 @@ export function ContactHeader({ conversation, onBack, showBackButton, onInfoClic
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-[#1E2235] bg-[#0F1117]">
+    <div className="flex-shrink-0 z-10 flex items-center gap-3 px-4 py-3 border-b border-[#1E2235] bg-[#0F1117] shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
       {/* Botón back (mobile) */}
       {showBackButton && (
         <button

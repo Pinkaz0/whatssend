@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     // 1. Obtener campaña y verificar ownership
     const { data: campaign, error: campError } = await supabase
       .from('campaigns')
-      .select('*, workspaces!inner(owner_id, ultramsg_instance_id, ultramsg_token)')
+      .select('*, workspaces!inner(owner_id, evolution_instance)')
       .eq('id', campaignId)
       .single()
 
@@ -40,17 +40,16 @@ export async function POST(request: NextRequest) {
     const rawWorkspace = campaign.workspaces
     const workspace = (Array.isArray(rawWorkspace) ? rawWorkspace[0] : rawWorkspace) as {
       owner_id: string
-      ultramsg_instance_id: string | null
-      ultramsg_token: string | null
+      evolution_instance: string | null
     } | null
 
     if (!workspace || workspace.owner_id !== user.id) {
       return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
     }
 
-    if (!workspace.ultramsg_instance_id?.trim() || !workspace.ultramsg_token?.trim()) {
+    if (!workspace.evolution_instance?.trim()) {
       return NextResponse.json(
-        { error: 'Configura tu instancia y token de UltraMsg en Ajustes antes de enviar campañas.' },
+        { error: 'Configura tus credenciales de Evolution API en Ajustes antes de enviar campañas.' },
         { status: 400 }
       )
     }
@@ -95,7 +94,7 @@ export async function POST(request: NextRequest) {
             flowControl: {
               key: `campaign-${campaignId}`,
               rate: 1,
-              period: '1s',
+              period: '8s',    // 1 msg cada 8s — perfil anti-spam
               parallelism: 1,
             },
           })
@@ -114,8 +113,8 @@ export async function POST(request: NextRequest) {
 
     // ── MODO DESARROLLO: loop síncrono (fallback sin QStash) ─────────────────
     console.log('[Campaign Send] Modo dev — loop síncrono (sin QStash)')
-    const { createUltraMsgClient } = await import('@/lib/ultramsg/client')
-    const ultramsg = createUltraMsgClient(workspace.ultramsg_instance_id!, workspace.ultramsg_token!)
+    const { createEvolutionClient } = await import('@/lib/whatsapp/evolution')
+    const evolution = createEvolutionClient(null, null, workspace.evolution_instance!)
 
     let sentCount = 0
     let failedCount = 0
@@ -131,7 +130,8 @@ export async function POST(request: NextRequest) {
       messageBody = messageBody.replace(/\{\{telefono\}\}/gi, contact.phone || '')
       messageBody = messageBody.replace(/\{\{phone\}\}/gi, contact.phone || '')
 
-      const result = await ultramsg.sendMessage(contact.phone, messageBody)
+      const cleanPhone = contact.phone.replace(/\D/g, '')
+      const result = await evolution.sendMessage(cleanPhone, messageBody)
 
       if (result.ok) {
         await supabase.from('campaign_contacts')
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
           direction: 'outbound',
           body: messageBody,
           status: 'sent',
-          ultramsg_message_id: result.data?.id || null,
+          evolution_message_id: result.data?.key?.id || null,
           sent_at: new Date().toISOString(),
         })
         sentCount++
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
         errors.push(`${contact.phone}: ${result.error || 'Error'}`)
       }
 
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      await new Promise(resolve => setTimeout(resolve, 8000)) // 8s anti-spam
     }
 
     await supabase.from('campaigns')

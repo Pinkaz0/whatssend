@@ -17,18 +17,19 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  // Obtener perfil del usuario
+  // Obtener perfil del usuario incluyendo role
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, avatar_url')
+    .select('full_name, avatar_url, role')
     .eq('id', user.id)
     .single()
+
+  const isAdmin = profile?.role === 'admin'
 
   return (
     <TooltipProvider delayDuration={0}>
       <div className="flex h-screen bg-[#0F1117] overflow-hidden">
-        {/* Sidebar - solo desktop */}
-        <Sidebar />
+        <Sidebar userEmail={user.email} isAdmin={isAdmin} />
 
         {/* Contenido principal */}
         <div className="flex flex-col flex-1 min-w-0">
@@ -47,8 +48,8 @@ export default async function DashboardLayout({
           </div>
 
           {/* Área de contenido */}
-          <main className="flex-1 overflow-auto">
-            <div className="p-6">
+          <main className="flex-1 overflow-hidden min-h-0">
+            <div id="main-content" className="p-6 h-full overflow-auto">
               {children}
             </div>
           </main>

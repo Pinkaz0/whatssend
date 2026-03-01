@@ -1,515 +1,516 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import { useState, useEffect } from 'react'
 import {
-  Settings,
-  Eye,
-  EyeOff,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  Copy,
-  ExternalLink,
-  Wifi,
+  Wifi, WifiOff, MessageSquare, Phone, Plus, Trash2, Loader2, Save, X, CheckCircle2, AlertCircle, QrCode
 } from 'lucide-react'
-import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
+
+
+// ─── Section Card ──────────────────────────────────────────────────────────────
+function Section({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-xl border p-5 ${className}`} style={{ background: '#0C0F1A', borderColor: '#141928' }}>
+      {children}
+    </div>
+  )
+}
+
+// ─── Settings Page ─────────────────────────────────────────────────────────────
 export default function SettingsPage() {
+  const [connected, setConnected] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<{ok?: boolean; message?: string} | null>(null)
+  const [instanceName, setInstanceName] = useState('')
+  const [qrCode, setQrCode] = useState<string | null>(null)
+  const [showQrModal, setShowQrModal] = useState(false)
+  const [notification, setNotification] = useState<{title: string, message: string, type: 'success' | 'error' | 'info'} | null>(null)
+  const [creating, setCreating] = useState(false)
+
+  const [biEmails, setBiEmails] = useState<string[]>([])
+  const [newEmail, setNewEmail] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [testing, setTesting] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [configuringWebhook, setConfiguringWebhook] = useState(false)
+  const [savingEmails, setSavingEmails] = useState(false)
+  const supabase = createClient()
 
-  // Workspace data
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null)
-  const [workspaceName, setWorkspaceName] = useState('')
-  const [instanceId, setInstanceId] = useState('')
-  const [token, setToken] = useState('')
-  const [showToken, setShowToken] = useState(false)
-
-  // Profile data
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-
-  // Google Integration
-  const [googleEmail, setGoogleEmail] = useState('')
-  const [googleKey, setGoogleKey] = useState('')
-  const [showGoogleKey, setShowGoogleKey] = useState(false)
-
-  // Webhook URL: generada por el servidor al hacer clic en "Configurar webhook"
-  const [webhookUrl, setWebhookUrl] = useState('')
-
-  // Cargar datos al montar
+  // Load existing config
   useEffect(() => {
     async function loadSettings() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      setEmail(user.email || '')
-
-      // Profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single()
-
-      if (profile) setFullName(profile.full_name || '')
-
-      // Workspace
-      const { data: workspace } = await supabase
-        .from('workspaces')
-        .select('id, name, ultramsg_instance_id, ultramsg_token, google_account_email, google_private_key')
-        .eq('owner_id', user.id)
-        .limit(1)
-        .maybeSingle()
-
-      if (workspace) {
-        setWorkspaceId(workspace.id)
-        setWorkspaceName(workspace.name)
-        setInstanceId(workspace.ultramsg_instance_id || '')
-        setToken(workspace.ultramsg_token || '')
-        setGoogleEmail(workspace.google_account_email || '')
-        setGoogleKey(workspace.google_private_key || '')
+      try {
+        const res = await fetch('/api/settings/get-settings')
+        
+        if (!res.ok) {
+          console.error('Failed to load settings:', res.status)
+          return
+        }
+        
+        const data = await res.json()
+        
+        if (data.evolutionInstance) {
+          setInstanceName(data.evolutionInstance)
+          setConnected(true)
+        }
+        
+        if (data.settings?.biEmails) {
+          setBiEmails(data.settings.biEmails)
+        }
+        
+      } catch (err) {
+        console.error('Error loading config:', err)
+      } finally {
+        setLoading(false)
       }
-
-      setLoading(false)
     }
-
     loadSettings()
   }, [])
 
-  // Guardar credenciales UltraMsg
-  const handleSave = async () => {
-    if (!workspaceId && !workspaceName) {
-      toast.error('Ingresa un nombre para tu workspace')
-      return
-    }
-
-    setSaving(true)
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      if (workspaceId) {
-        // Actualizar workspace existente
-        const { error } = await supabase
-          .from('workspaces')
-          .update({
-            name: workspaceName,
-            ultramsg_instance_id: instanceId || null,
-            ultramsg_token: token || null,
-            google_account_email: googleEmail || null,
-            google_private_key: googleKey || null,
-          })
-          .eq('id', workspaceId)
-
-        if (error) throw error
-      } else {
-        // Crear nuevo workspace
-        const { data, error } = await supabase
-          .from('workspaces')
-          .insert({
-            name: workspaceName || 'Mi Workspace',
-            owner_id: user.id,
-            ultramsg_instance_id: instanceId || null,
-            ultramsg_token: token || null,
-            google_account_email: googleEmail || null,
-            google_private_key: googleKey || null,
-          })
-          .select('id')
-          .single()
-
-        if (error) throw error
-        setWorkspaceId(data.id)
-      }
-
-      // Actualizar perfil
-      await supabase
-        .from('profiles')
-        .update({ full_name: fullName })
-        .eq('id', user.id)
-
-      toast.success('Configuración guardada')
-      setConnectionStatus('idle')
-    } catch (err) {
-      console.error('[Settings] Save error:', err)
-      toast.error('Error al guardar configuración')
-    } finally {
-      setSaving(false)
+  const addEmail = () => {
+    if (newEmail.trim() && newEmail.includes('@')) {
+      setBiEmails(prev => [...prev, newEmail.trim()])
+      setNewEmail('')
     }
   }
 
-  // Probar conexión UltraMsg
+  const removeEmail = (idx: number) => {
+    setBiEmails(prev => prev.filter((_, i) => i !== idx))
+  }
+
   const handleTestConnection = async () => {
-    if (!instanceId || !token) {
-      toast.error('Ingresa el Instance ID y Token primero')
+    if (!instanceName) {
+      setTestResult({ ok: false, message: 'Falta nombre de instancia.' })
       return
     }
-
+    
     setTesting(true)
-    setConnectionStatus('idle')
+    setTestResult(null)
+    
     try {
       const res = await fetch('/api/settings/test-connection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceId, token }),
+        body: JSON.stringify({ instanceName })
       })
-
       const data = await res.json()
+      
+      if (res.ok && data.success) {
+        setConnected(true)
+        setQrCode(null)
+        setShowQrModal(false)
+        setTestResult({ ok: true, message: 'Conexión exitosa' })
 
-      if (data.success) {
-        setConnectionStatus('success')
-        toast.success('Conexión exitosa', { description: data.message })
+        // Auto-guardar la instancia en la BD para que no se pierda al recargar
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: workspace } = await supabase
+            .from('workspaces')
+            .select('id')
+            .eq('owner_id', user.id)
+            .single()
+            
+        if (workspace) {
+            // Use backend API to bypass RLS
+            const saveRes = await fetch('/api/settings/save-instance', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ instanceName, userId: user.id })
+            })
+            const saveData = await saveRes.json()
+            if (!saveRes.ok) console.error('Auto save error:', saveData.error)
+            
+            // Auto registrar webhook
+            try {
+              await fetch('/api/settings/set-webhook', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ instanceName })
+              })
+            } catch(e) {
+              console.error("Set webhook failed on auto-save", e)
+            }
+          }
+        }
+
       } else {
-        setConnectionStatus('error')
-        toast.error('Conexión fallida', { description: data.error })
+        setConnected(false)
+        setTestResult({ ok: false, message: data.error || 'Error de conexión' })
       }
-    } catch {
-      setConnectionStatus('error')
-      toast.error('Error de conexión')
+    } catch (err) {
+      setConnected(false)
+      setTestResult({ ok: false, message: 'Error de red' })
     } finally {
       setTesting(false)
     }
   }
 
-  const copyWebhookUrl = () => {
-    navigator.clipboard.writeText(webhookUrl)
-    toast.success('URL copiada al portapapeles')
-  }
-
-  const handleSetWebhookInUltraMsg = async () => {
-    if (!instanceId || !token) {
-      toast.error('Ingresa el Instance ID y Token primero')
-      return
-    }
-
-    setConfiguringWebhook(true)
+  const handleSaveConnection = async () => {
+    setSaving(true)
     try {
-      // 1. Guardar/crear workspace primero para que la API encuentre las credenciales en la DB
-      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        toast.error('No autorizado')
+        setNotification({ title: 'Error de Sesión', message: 'No se detectó tu sesión de usuario. Intenta recargar la página.', type: 'error' })
+        return
+      }
+      
+      if (!instanceName) {
+        setNotification({ title: 'Sin Instancia', message: 'Primero crea una instancia antes de guardar.', type: 'error' })
         return
       }
 
-      if (workspaceId) {
-        // Actualizar workspace existente
-        const { error } = await supabase
-          .from('workspaces')
-          .update({
-            name: workspaceName || 'Mi Workspace',
-            ultramsg_instance_id: instanceId || null,
-            ultramsg_token: token || null,
-            google_account_email: googleEmail || null,
-            google_private_key: googleKey || null,
-          })
-          .eq('id', workspaceId)
-        if (error) throw error
-      } else {
-        // Crear nuevo workspace
-        const { data, error } = await supabase
-          .from('workspaces')
-          .insert({
-            name: workspaceName || 'Mi Workspace',
-            owner_id: user.id,
-            ultramsg_instance_id: instanceId || null,
-            ultramsg_token: token || null,
-            google_account_email: googleEmail || null,
-            google_private_key: googleKey || null,
-          })
-          .select('id')
-          .single()
-        if (error) throw error
-        setWorkspaceId(data.id)
-      }
-
-      // 2. Ahora sí configurar el webhook (la API leerá las credenciales de la DB)
-      const res = await fetch('/api/settings/set-webhook', {
+      // Use backend API with service role to bypass RLS
+      const saveRes = await fetch('/api/settings/save-instance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ instanceName, userId: user.id })
       })
-      const data = await res.json()
-      if (res.ok) {
-        setWebhookUrl(data.webhookUrl || '')
-        toast.success('Webhook configurado', { description: data.message })
-      } else {
-        toast.error('Error', { description: data.error })
+      const saveData = await saveRes.json()
+      
+      if (!saveRes.ok) throw new Error(saveData.error || 'Error guardando instancia')
+      
+      // Register webhook
+      if (instanceName) {
+        try {
+          await fetch('/api/settings/set-webhook', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ instanceName })
+          })
+        } catch(e) {
+          console.error("Set webhook failed", e)
+        }
       }
-    } catch (err) {
-      console.error('[Settings] Webhook setup error:', err)
-      toast.error('Error al configurar webhook')
+
+      setNotification({ title: 'Conexión Guardada', message: `Instancia '${instanceName}' guardada correctamente.`, type: 'success' })
+    } catch (err: any) {
+      console.error('Save error:', err)
+      setNotification({ title: 'Error', message: err.message || 'Ocurrió un error al guardar la conexión.', type: 'error' })
     } finally {
-      setConfiguringWebhook(false)
+      setSaving(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-      </div>
-    )
+  const handleSaveEmails = async () => {
+    setSavingEmails(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      
+      const { data: workspace } = await supabase
+        .from('workspaces')
+        .select('id, settings')
+        .eq('owner_id', user.id)
+        .single()
+        
+      if (!workspace) return
+      
+      const currentSettings = workspace.settings as any || {}
+      
+      const { error } = await supabase
+        .from('workspaces')
+        .update({
+          settings: {
+            ...currentSettings,
+            biEmails
+          }
+        })
+        .eq('id', workspace.id)
+        
+      if (error) throw error
+
+      setNotification({ title: 'Correos Guardados', message: 'La lista de correos BI ha sido actualizada.', type: 'success' })
+    } catch (err) {
+      console.error('Save error:', err)
+      setNotification({ title: 'Error', message: 'Ocurrió un error al guardar los correos.', type: 'error' })
+    } finally {
+      setSavingEmails(false)
+    }
+  }
+
+  const handleCreateInstance = async () => {
+    setCreating(true)
+    setQrCode(null)
+    setTestResult(null)
+    
+    try {
+      const res = await fetch('/api/settings/create-instance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setInstanceName(data.instanceName)
+        if (data.qrcode && typeof data.qrcode === 'string') {
+          let qr = data.qrcode
+          if (!qr.startsWith('data:image')) qr = `data:image/png;base64,${qr}`
+          setQrCode(qr)
+        }
+        setShowQrModal(true)
+      } else {
+        setNotification({ title: 'Error al Crear', message: data.error || 'Ocurrió un error al crear la instancia.', type: 'error' })
+      }
+    } catch(err) {
+      console.error(err)
+      setNotification({ title: 'Error de Red', message: 'No se pudo conectar con el servidor para crear la instancia.', type: 'error' })
+    } finally {
+      setCreating(false)
+    }
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Settings className="w-6 h-6 text-emerald-400" />
-          Configuración
-        </h1>
-        <p className="text-[#64748B] mt-1">
-          Administra tu perfil y credenciales de UltraMsg
-        </p>
-      </div>
-
-      {/* Perfil */}
-      <Card className="bg-[#1A1D27] border-[#1E2235]">
-        <CardHeader>
-          <CardTitle className="text-white text-lg">Perfil</CardTitle>
-          <CardDescription className="text-[#64748B]">
-            Tu información personal
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Nombre completo</Label>
-            <Input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Tu nombre"
-              className="bg-[#0F1117] border-[#2A2F45] text-white placeholder:text-[#475569] focus:border-emerald-500 h-10"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Email</Label>
-            <Input
-              value={email}
-              disabled
-              className="bg-[#0F1117] border-[#2A2F45] text-[#64748B] h-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Workspace */}
-      <Card className="bg-[#1A1D27] border-[#1E2235]">
-        <CardHeader>
-          <CardTitle className="text-white text-lg">Workspace</CardTitle>
-          <CardDescription className="text-[#64748B]">
-            Configuración de tu espacio de trabajo
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Nombre del workspace</Label>
-            <Input
-              value={workspaceName}
-              onChange={(e) => setWorkspaceName(e.target.value)}
-              placeholder="Mi Empresa"
-              className="bg-[#0F1117] border-[#2A2F45] text-white placeholder:text-[#475569] focus:border-emerald-500 h-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* UltraMsg */}
-      <Card className="bg-[#1A1D27] border-[#1E2235]">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-white text-lg">UltraMsg</CardTitle>
-              <CardDescription className="text-[#64748B]">
-                Credenciales para enviar y recibir mensajes de WhatsApp
-              </CardDescription>
-            </div>
-            {connectionStatus === 'success' && (
-              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                <CheckCircle className="w-3 h-3 mr-1" />
-                Conectado
-              </Badge>
-            )}
-            {connectionStatus === 'error' && (
-              <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
-                <XCircle className="w-3 h-3 mr-1" />
-                Error
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Instance ID */}
-          <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Instance ID</Label>
-            <Input
-              value={instanceId}
-              onChange={(e) => { setInstanceId(e.target.value); setConnectionStatus('idle') }}
-              placeholder="instance12345"
-              className="bg-[#0F1117] border-[#2A2F45] text-white placeholder:text-[#475569] focus:border-emerald-500 h-10 font-mono text-sm"
-            />
-          </div>
-
-          {/* Token */}
-          <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Token</Label>
-            <div className="relative">
-              <Input
-                type={showToken ? 'text' : 'password'}
-                value={token}
-                onChange={(e) => { setToken(e.target.value); setConnectionStatus('idle') }}
-                placeholder="••••••••••••••••"
-                className="bg-[#0F1117] border-[#2A2F45] text-white placeholder:text-[#475569] focus:border-emerald-500 h-10 font-mono text-sm pr-10"
+    <div className="p-6 h-full overflow-auto space-y-4 max-w-2xl">
+      {loading ? (
+        <div className="flex h-full items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+        </div>
+      ) : (
+        <>
+          {/* ── Perfil ── */}
+      <Section>
+        <p className="text-white font-semibold text-xs mb-4">Perfil</p>
+        <div className="grid grid-cols-2 gap-3">
+          {[['Nombre', 'Luis Campos'], ['Email', 'llcampos24@gmail.com']].map(([l, v]) => (
+            <div key={l}>
+              <label className="text-[#475569] text-xs mb-1.5 block">{l}</label>
+              <input
+                defaultValue={v}
+                className="w-full rounded-lg px-3 py-2.5 text-[#E2E8F0] text-xs focus:outline-none focus:border-emerald-500/40 transition-colors border"
+                style={{ background: '#07090F', borderColor: '#1E2537' }}
               />
-              <button
-                type="button"
-                onClick={() => setShowToken(!showToken)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-white transition-colors"
-              >
-                {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
             </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ── WhatsApp / Evolution API ── */}
+      <Section>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-white font-semibold text-xs">WhatsApp / Evolution API</p>
+            <p className="text-[#475569] text-xs mt-0.5">Configura tu instancia para enviar y recibir mensajes.</p>
+          </div>
+          <span className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-semibold border ${connected ? 'text-emerald-400 border-emerald-500/20' : 'text-rose-400 border-rose-500/20'}`}
+            style={{ background: connected ? '#10b98110' : '#f43f5e10' }}>
+            {connected ? <Wifi style={{ width: 11, height: 11 }} /> : <WifiOff style={{ width: 11, height: 11 }} />}
+            {connected ? 'Conectado' : 'Desconectado'}
+          </span>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-[#475569] text-xs mb-1.5 block">Nombre de Instancia (Auto-generado)</label>
+            <input
+              value={instanceName}
+              readOnly
+              placeholder="Haz clic en 'Crear Nueva Instancia'"
+              className="w-full rounded-lg px-3 py-2.5 text-[#E2E8F0] text-xs focus:outline-none focus:border-emerald-500/40 transition-colors border placeholder-[#334155] opacity-70 cursor-not-allowed"
+              style={{ background: '#07090F', borderColor: '#1E2537' }}
+            />
           </div>
 
-          {/* Test Connection */}
-          <Button
-            variant="outline"
-            onClick={handleTestConnection}
-            disabled={testing || !instanceId || !token}
-            className="border-[#2A2F45] text-[#94A3B8] hover:text-white hover:bg-[#0F1117] hover:border-emerald-500/50"
-          >
-            {testing ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Wifi className="w-4 h-4 mr-2" />
-            )}
-            Probar Conexión
-          </Button>
-
-          <Separator className="bg-[#1E2235]" />
-
-          {/* Webhook URL — generada automáticamente por el servidor */}
-          <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Webhook URL</Label>
-            <p className="text-xs text-[#475569]">
-              Haz clic en el botón para registrar automáticamente la URL de tu workspace en UltraMsg y empezar a recibir mensajes.
-            </p>
-            <Button
-              variant="outline"
-              onClick={handleSetWebhookInUltraMsg}
-              disabled={configuringWebhook || !instanceId || !token}
-              className="border-[#2A2F45] text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/50"
-            >
-              {configuringWebhook ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : null}
-              Configurar webhook en UltraMsg
-            </Button>
-            {webhookUrl && (
-              <div className="flex items-center gap-2 mt-2">
-                <Input
-                  value={webhookUrl}
-                  readOnly
-                  className="bg-[#0F1117] border-[#2A2F45] text-emerald-400 h-10 font-mono text-xs flex-1"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={copyWebhookUrl}
-                  className="border-[#2A2F45] text-[#64748B] hover:text-white hover:bg-[#0F1117] h-10 w-10 flex-shrink-0"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
+          {connected ? (
+            <div className="pt-2 flex flex-col gap-2 rounded-lg border border-emerald-500/20 px-4 py-3 bg-emerald-500/5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Wifi className="w-4 h-4 text-emerald-400" />
+                  <span className="text-emerald-400 text-xs font-semibold">Dispositivo vinculado correctamente</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleTestConnection}
+                    disabled={testing}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 hover:underline transition-colors disabled:opacity-50"
+                  >
+                    {testing ? 'Verificando...' : 'Verificar'}
+                  </button>
+                  <span className="text-[#1E2537]">|</span>
+                  <button
+                    onClick={() => {
+                      setConnected(false)
+                      setInstanceName('')
+                      setTestResult(null)
+                    }}
+                    className="text-xs text-rose-400 hover:text-rose-300 hover:underline transition-colors"
+                  >
+                    Desvincular
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* Link to UltraMsg */}
-          <a
-            href="https://ultramsg.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            Abrir panel de UltraMsg
-          </a>
-        </CardContent>
-      </Card>
-
-      {/* Google Sheets Integration */}
-      <Card className="bg-[#1A1D27] border-[#1E2235]">
-        <CardHeader>
-          <CardTitle className="text-white text-lg flex items-center gap-2">
-            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="#4285F4"/><path d="M12 6v12l4-4-4 4-4-4" stroke="#34A853" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Integración Google Sheets
-          </CardTitle>
-          <CardDescription className="text-[#64748B]">
-            Credenciales de Service Account para importar contactos
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Google Account Email</Label>
-            <Input
-              value={googleEmail}
-              onChange={(e) => setGoogleEmail(e.target.value)}
-              placeholder="service-account@project.iam.gserviceaccount.com"
-              className="bg-[#0F1117] border-[#2A2F45] text-white placeholder:text-[#475569] h-10 text-sm"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Private Key</Label>
-            <div className="relative">
-              <Input
-                type={showGoogleKey ? 'text' : 'password'}
-                value={googleKey}
-                onChange={(e) => setGoogleKey(e.target.value)}
-                placeholder="-----BEGIN PRIVATE KEY-----..."
-                className="bg-[#0F1117] border-[#2A2F45] text-white placeholder:text-[#475569] h-10 font-mono text-xs pr-10"
-              />
+              {testResult && (
+                <span className={`text-xs ${testResult.ok ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {testResult.message}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 pt-2">
               <button
-                type="button"
-                onClick={() => setShowGoogleKey(!showGoogleKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-white transition-colors"
+                onClick={handleCreateInstance}
+                disabled={creating || saving}
+                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
               >
-                {showGoogleKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {creating ? 'Creando...' : 'Crear Nueva Instancia'}
+              </button>
+              <button
+                onClick={handleTestConnection}
+                disabled={testing || !instanceName}
+                className="px-4 py-2 rounded-lg bg-[#1E2537] text-white text-xs font-semibold hover:bg-[#2A3441] transition-colors disabled:opacity-50"
+              >
+                {testing ? 'Probando...' : 'Probar Conexión'}
+              </button>
+              {testResult && (
+                <span className={`text-xs ${testResult.ok ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {testResult.message}
+                </span>
+              )}
+            </div>
+          )}
+          
+          <div className="pt-2 border-t border-[#1E2537]">
+            <button 
+              onClick={handleSaveConnection}
+              disabled={saving || !instanceName}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {saving ? 'Guardando...' : 'Guardar Conexión'}
+            </button>
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Backoffice de Ingreso (BI) — User editable ── */}
+      <Section>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-[#a78bfa] font-semibold text-xs">Backoffice de Ingreso (BI)</p>
+        </div>
+        <p className="text-[#475569] text-xs mb-4">Correos BI donde se envían los formatos de venta. Aparecen como opciones en Registro de Ventas.</p>
+        <div className="space-y-2 mb-3">
+          {biEmails.map((email, i) => (
+            <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg border" style={{ background: '#07090F', borderColor: '#1E2537' }}>
+              <span className="text-[#E2E8F0] text-xs flex-1 font-mono">{email}</span>
+              <button onClick={() => removeEmail(i)} className="p-1 rounded-md text-rose-400 hover:bg-rose-500/10 transition-colors">
+                <Trash2 style={{ width: 12, height: 12 }} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={newEmail}
+            onChange={e => setNewEmail(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addEmail()}
+            placeholder="correo@movistar.cl"
+            className="flex-1 rounded-lg px-3 py-2 text-[#E2E8F0] text-xs border focus:outline-none focus:border-emerald-500/40 transition-colors placeholder-[#334155]"
+            style={{ background: '#07090F', borderColor: '#1E2537' }}
+          />
+          <button onClick={addEmail} className="flex items-center gap-1 px-3 py-2 rounded-lg bg-[#a78bfa]/10 text-[#a78bfa] text-xs font-semibold border border-[#a78bfa]/20 hover:bg-[#a78bfa]/20 transition-colors">
+            <Plus style={{ width: 12, height: 12 }} /> Agregar
+          </button>
+        </div>
+        
+        <div className="mt-4 pt-4 border-t border-[#1E2537]">
+          <button 
+            onClick={handleSaveEmails}
+            disabled={savingEmails}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#a78bfa] text-white text-xs font-semibold hover:bg-[#9333ea] transition-colors shadow-lg shadow-[#a78bfa]/20 disabled:opacity-50"
+          >
+            {savingEmails ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {savingEmails ? 'Guardando...' : 'Guardar Correos BI'}
+          </button>
+        </div>
+      </Section>
+
+      {/* ── QR Modal ── */}
+      {showQrModal && qrCode && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-sm bg-[#0C0F1A] border border-[#1E2537] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#1E2537]">
+              <h3 className="text-white font-semibold text-sm flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-indigo-400" /> Vincular Dispositivo
+              </h3>
+              <button 
+                onClick={() => { setShowQrModal(false); setQrCode(null) }}
+                className="p-1.5 rounded-md hover:bg-white/5 transition-colors text-[#64748B] hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Body */}
+            <div className="p-6 flex flex-col items-center">
+              <div className="bg-white p-2 rounded-xl shadow-inner mb-4">
+                <img src={qrCode} alt="WhatsApp QR Code" className="w-60 h-60 object-contain" />
+              </div>
+              <p className="text-white text-sm font-medium mb-1 text-center">Escanea este código con WhatsApp</p>
+              <p className="text-[#64748B] text-xs text-center">
+                Abre WhatsApp en tu teléfono, ve a Dispositivos Vinculados, toca en "Vincular un dispositivo" y apunta tu cámara a esta pantalla. Luego presiona <strong className="text-white font-semibold">Probar Conexión</strong>.
+              </p>
+            </div>
+            
+            {/* Footer */}
+            <div className="p-4 bg-[#07090F] border-t border-[#1E2537] flex justify-end">
+              <button 
+                onClick={() => setShowQrModal(false)}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-xs font-medium rounded-lg transition-colors border border-white/10"
+              >
+                Cerrar
               </button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      {/* Botón Guardar */}
-      <div className="flex justify-end pb-6">
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium px-8 shadow-lg shadow-emerald-500/20"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Guardando...
-            </>
-          ) : (
-            'Guardar Configuración'
-          )}
-        </Button>
-      </div>
+      {/* ── Notification Modal ── */}
+      {notification && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+          <div className="w-full max-w-sm bg-[#0C0F1A] border border-[#1E2537] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#1E2537]">
+              <h3 className="text-white font-semibold text-sm flex items-center gap-2">
+                {notification.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                ) : notification.type === 'error' ? (
+                  <AlertCircle className="w-4 h-4 text-rose-400" />
+                ) : (
+                  <MessageSquare className="w-4 h-4 text-indigo-400" />
+                )}
+                {notification.title}
+              </h3>
+              <button 
+                onClick={() => setNotification(null)}
+                className="p-1.5 rounded-md hover:bg-white/5 transition-colors text-[#64748B] hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Body */}
+            <div className="p-5">
+              <p className="text-[#E2E8F0] text-sm leading-relaxed">
+                {notification.message}
+              </p>
+            </div>
+            
+            {/* Footer */}
+            <div className="p-4 bg-[#07090F] border-t border-[#1E2537] flex justify-end">
+              <button 
+                onClick={() => setNotification(null)}
+                className={`px-4 py-2 text-white text-xs font-semibold rounded-lg transition-colors ${
+                  notification.type === 'success' ? 'bg-emerald-500 hover:bg-emerald-600' :
+                  notification.type === 'error' ? 'bg-rose-500 hover:bg-rose-600' :
+                  'bg-indigo-500 hover:bg-indigo-600'
+                }`}
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </>
+      )}
     </div>
   )
 }
