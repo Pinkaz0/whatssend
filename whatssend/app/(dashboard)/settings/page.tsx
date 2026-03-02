@@ -31,6 +31,8 @@ export default function SettingsPage() {
   const [biEmails, setBiEmails] = useState<string[]>([])
   const [newEmail, setNewEmail] = useState('')
   const [agentPhone, setAgentPhone] = useState('')
+  const [userName, setUserName] = useState('')
+  const [userEmail, setUserEmail] = useState('')
   const [googleEmail, setGoogleEmail] = useState('')
   const [googleAppKey, setGoogleAppKey] = useState('')
   const [savingGoogle, setSavingGoogle] = useState(false)
@@ -38,6 +40,10 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [savingPhone, setSavingPhone] = useState(false)
   const [savingEmails, setSavingEmails] = useState(false)
+  const [savingUltraMsg, setSavingUltraMsg] = useState(false)
+  const [registeringWebhook, setRegisteringWebhook] = useState(false)
+  const [ultraMsgInstance, setUltraMsgInstance] = useState('')
+  const [ultraMsgToken, setUltraMsgToken] = useState('')
   const [clearing, setClearing] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const supabase = createClient()
@@ -73,14 +79,30 @@ export default function SettingsPage() {
         // Cargar el teléfono del perfil del usuario logueado
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+          setUserEmail(user.email || '')
           const { data: profile } = await supabase
             .from('profiles')
-            .select('phone')
+            .select('phone, full_name')
             .eq('id', user.id)
             .single()
             
           if (profile?.phone) {
             setAgentPhone(profile.phone)
+          }
+          if (profile?.full_name) {
+            setUserName(profile.full_name)
+          }
+
+          // Cargar Workspace para Ultramsg temporal
+          const { data: workspace } = await supabase
+            .from('workspaces')
+            .select('ultramsg_instance_id, ultramsg_token')
+            .eq('owner_id', user.id)
+            .single()
+            
+          if (workspace) {
+            setUltraMsgInstance(workspace.ultramsg_instance_id || '')
+            setUltraMsgToken(workspace.ultramsg_token || '')
           }
         }
 
@@ -332,6 +354,77 @@ export default function SettingsPage() {
     }
   }
 
+  const handleSaveUltraMsg = async () => {
+    setSavingUltraMsg(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      
+      const { error } = await supabase
+        .from('workspaces')
+        .update({
+          ultramsg_instance_id: ultraMsgInstance,
+          ultramsg_token: ultraMsgToken
+        })
+        .eq('owner_id', user.id)
+        
+      if (error) throw error
+
+      setNotification({ title: 'UltraMsg Guardado', message: 'Tus credenciales de UltraMsg han sido actualizadas.', type: 'success' })
+    } catch (err) {
+      console.error('Save error:', err)
+      setNotification({ title: 'Error', message: 'Ocurrió un error al guardar UltraMsg.', type: 'error' })
+    } finally {
+      setSavingUltraMsg(false)
+    }
+  }
+
+  const handleRegisterUltraMsgWebhook = async () => {
+    if (!ultraMsgInstance || !ultraMsgToken) {
+      setNotification({ title: 'Faltan Datos', message: 'Guarda primero tu Instance ID y Token', type: 'error' })
+      return
+    }
+
+    setRegisteringWebhook(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: workspace } = await supabase
+        .from('workspaces')
+        .select('id')
+        .eq('owner_id', user.id)
+        .single()
+        
+      if (!workspace) throw new Error('Workspace not found')
+
+      const appBase = window.location.origin
+      const webhookUrl = `${appBase}/api/messages/webhook?workspace_id=${workspace.id}`
+
+      const res = await fetch('/api/settings/set-ultramsg-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: webhookUrl,
+          instanceId: ultraMsgInstance,
+          token: ultraMsgToken
+        })
+      })
+
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setNotification({ title: 'Webhook Registrado', message: 'Se ha configurado automáticamente en UltraMsg.', type: 'success' })
+      } else {
+        setNotification({ title: 'Error en UltraMsg', message: data.error || 'Ocurrió un error.', type: 'error' })
+      }
+    } catch (err) {
+      console.error(err)
+      setNotification({ title: 'Error', message: 'Ocurrió un error al registrar el Webhook.', type: 'error' })
+    } finally {
+      setRegisteringWebhook(false)
+    }
+  }
+
   const handleCreateInstance = async () => {
     setCreating(true)
     setQrCode(null)
@@ -375,7 +468,7 @@ export default function SettingsPage() {
       <Section>
         <p className="text-white font-semibold text-xs mb-4">Perfil</p>
         <div className="grid grid-cols-2 gap-3">
-          {[['Nombre', 'Luis Campos'], ['Email', 'llcampos24@gmail.com']].map(([l, v]) => (
+          {[['Nombre', userName || 'Cargando...'], ['Email', userEmail || 'Cargando...']].map(([l, v]) => (
             <div key={l}>
               <label className="text-[#475569] text-xs mb-1.5 block">{l}</label>
               <input
@@ -662,6 +755,101 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* ── Zona de Limpieza ── */}
+          <Section className="border-red-900/30">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-red-400 font-semibold text-xs mb-1">Zona de Peligro</p>
+                <p className="text-[#64748B] text-xs">Borrar todos los mensajes y contactos de la bandeja.</p>
+              </div>
+              
+              {!showClearConfirm ? (
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  className="px-4 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 text-xs font-medium transition-colors"
+                >
+                  Limpiar Bandeja
+                </button>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setShowClearConfirm(false)}
+                    className="px-3 py-2 rounded-lg bg-[#1E293B] hover:bg-[#334155] text-white text-xs font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleClearInbox}
+                    disabled={clearing}
+                    className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors flex items-center space-x-2"
+                  >
+                    {clearing ? <Loader2 className="w-3 h-3 animate-spin"/> : <Trash2 className="w-3 h-3" />}
+                    <span>{clearing ? 'Limpiando...' : 'Sí, Borrar Todo'}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </Section>
+
+          {/* ── UltraMsg (Solo para erml1903) ── */}
+          {(userEmail?.toLowerCase() === 'erml1903@hotmail.com') && (
+            <Section className="border-purple-500/30">
+              <p className="text-purple-400 font-semibold text-xs mb-1 flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4" />
+                <span>UltraMsg (Legado - Acceso Temporal)</span>
+              </p>
+              <p className="text-[#64748B] text-xs mb-4">
+                Uso exclusivo para transición. Estos mensajes saltan Evolution API.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[#475569] text-xs mb-1.5 block">Instance ID</label>
+                  <input
+                    type="text"
+                    value={ultraMsgInstance}
+                    onChange={(e) => setUltraMsgInstance(e.target.value)}
+                    placeholder="Ej. instance83492"
+                    className="w-full bg-[#0F1423] border border-[#1E293B] rounded-lg px-3 py-2 text-white text-xs placeholder-[#475569] focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-[#475569] text-xs mb-1.5 block">Token</label>
+                  <input
+                    type="text"
+                    value={ultraMsgToken}
+                    onChange={(e) => setUltraMsgToken(e.target.value)}
+                    placeholder="Ej. dkx92md..."
+                    className="w-full bg-[#0F1423] border border-[#1E293B] rounded-lg px-3 py-2 text-white text-xs placeholder-[#475569] focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+                
+                <div className="bg-[#0F1423] border border-[#1E293B] rounded-lg p-3">
+                  <p className="text-[#64748B] text-[11px] mb-1">Tu URL de Webhook:</p>
+                  <code className="text-emerald-500 text-xs select-all">https://whatssend-w6tu.vercel.app/api/messages/webhook</code>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3 mt-4">
+                  <button
+                    onClick={handleSaveUltraMsg}
+                    disabled={savingUltraMsg}
+                    className="w-full sm:w-auto px-5 py-2 flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex flex-row items-center justify-center disabled:opacity-50 transition-colors"
+                  >
+                    {savingUltraMsg ? <Loader2 className="w-4 h-4 animate-spin" /> : '1. Guardar Credenciales'}
+                  </button>
+                  <button
+                    onClick={handleRegisterUltraMsgWebhook}
+                    disabled={registeringWebhook}
+                    className="w-full sm:w-auto px-5 py-2 flex-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex flex-row items-center justify-center disabled:opacity-50 transition-colors"
+                  >
+                    {registeringWebhook ? <Loader2 className="w-4 h-4 animate-spin" /> : '2. Auto-Registrar Webhook'}
+                  </button>
+                </div>
+              </div>
+            </Section>
+          )}
 
       {/* ── QR Modal ── */}
       {showQrModal && qrCode && (
