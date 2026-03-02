@@ -103,7 +103,13 @@ async function processContact(campaignContactId: string, campaignId: string): Pr
   const evolution = createEvolutionClient(null, null, workspace.evolution_instance)
   
   // Normalize phone (Evolution requires no +, no spaces)
-  const cleanPhone = contact.phone.replace(/\D/g, '')
+  let cleanPhone = contact.phone.replace(/\D/g, '')
+  
+  // Format Chilean numbers specifically: if starts with 56 and length is 10, add a '9'
+  if (cleanPhone.startsWith('56') && cleanPhone.length === 10) {
+    cleanPhone = '569' + cleanPhone.slice(2)
+  }
+
   const result = await evolution.sendMessage(cleanPhone, messageBody)
 
   if (result.ok) {
