@@ -1,6 +1,7 @@
 export interface VentaTOA {
   id: string
   workspace_id: string
+  owner_id?: string
   orden: string
   estado: string
   cliente: string | null

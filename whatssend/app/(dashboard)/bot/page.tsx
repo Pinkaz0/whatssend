@@ -189,7 +189,7 @@ export default function BotPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ws = workspace as any
       setBotEnabled(ws.bot_enabled || false)
-      setSystemPrompt(ws.bot_system_prompt || '')
+      setSystemPrompt(ws.bot_system_prompt || DEFAULT_SYSTEM_PROMPT)
       setCustomInstructions(ws.bot_custom_instructions || '')
     }
   }, [workspace])

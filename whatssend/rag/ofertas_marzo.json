@@ -1,0 +1,210 @@
+[
+  {
+    "Segmento": "MASIVO",
+    "Plan": "Internet Fibra Optica 600/600",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 16990,
+    "PrecioNormalLleno": 22990,
+    "CondicionesPromo": "Descuento 26 x 6 meses BA 600"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "Internet Fibra Optica 800/800",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 17990,
+    "PrecioNormalLleno": 27990,
+    "CondicionesPromo": "Descuento 35 x 6 meses BA 800"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "Fibra Gamer",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 21990,
+    "PrecioNormalLleno": 38990,
+    "CondicionesPromo": "Descuento 43 x 6 meses BA 940"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "Internet Fibra Optica 2000/2000",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 14990,
+    "PrecioNormalLleno": 22990,
+    "CondicionesPromo": "Descuento 34 x 12 meses BA 2000"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "DUO (Internet Fibra 600/600 + MTV App Disney Premium MAX)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 30990,
+    "PrecioNormalLleno": 45990,
+    "CondicionesPromo": "Descuento 33 x 6 meses BA DUO TV App Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "DUO (Internet Fibra 800/800 + MTV App Disney Premium MAX)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 33990,
+    "PrecioNormalLleno": 50990,
+    "CondicionesPromo": "Descuento 34 x 6 meses BA DUO TV App Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "DUO (Internet Fibra 800/800 + MTV App Disney Premium MAX)",
+    "BeneficioExtra": "800 beneficio salto velocidad fibra gamer",
+    "PrecioPromocion": 36990,
+    "PrecioNormalLleno": 50990,
+    "CondicionesPromo": "Descuento 28 x 6 meses BA DUO TV App Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "DUO (Internet Fibra 600/600 + MTV Disney Premium MAX)",
+    "BeneficioExtra": " ",
+    "PrecioPromocion": 33990,
+    "PrecioNormalLleno": 50990,
+    "CondicionesPromo": "Descuento 34 x 6 meses BA DUO TV Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "DUO (Internet Fibra 800/800 + MTV Disney Premium MAX)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 38990,
+    "PrecioNormalLleno": 55990,
+    "CondicionesPromo": "Descuento 31 x 6 meses BA DUO TV Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "DUO (Internet Fibra Gamer + MTV Disney Premium MAX)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 40990,
+    "PrecioNormalLleno": 66990,
+    "CondicionesPromo": "Descuento 39 x 6 meses BA DUO TV Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "DUO (Internet Fibra Optica 600/600 + Serv. de Voz)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 22990,
+    "PrecioNormalLleno": 26990,
+    "CondicionesPromo": "Descuento 14 x 6 meses BA DUOBA 600"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "DUO (Internet Fibra Optica 800/800 + Serv. de Voz)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 26990,
+    "PrecioNormalLleno": 31990,
+    "CondicionesPromo": "Descuento 15 x 6 meses BA DUOBA 800"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "DUO (Fibra Gamer + Serv. de Voz)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 35990,
+    "PrecioNormalLleno": 42990,
+    "CondicionesPromo": "Descuento 16 x 6 meses BA DUOBA 940"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "TRIO (Internet Fibra 600/600 + MTV App Disney Premium MAX + Serv Voz)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 35990,
+    "PrecioNormalLleno": 50990,
+    "CondicionesPromo": "Descuento 29 x 6 meses BA TRIO 600 TV App Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "TRIO (Internet Fibra 800/800 + MTV App Disney Premium MAX + Serv Voz)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 37990,
+    "PrecioNormalLleno": 55990,
+    "CondicionesPromo": "Descuento 32 x 6 meses BA TRIO 800 TV App Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "TRIO (Internet Fibra 800/800 + MTV App Disney Premium MAX + Serv Voz)",
+    "BeneficioExtra": "800 beneficio salto velocidad fibra gamer",
+    "PrecioPromocion": 39990,
+    "PrecioNormalLleno": 55990,
+    "CondicionesPromo": "Descuento 28 x 6 meses BA TRIO 800 TV App Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "TRIO (Internet Fibra 600/600 + MTV Disney Premium MAX + Serv Voz)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 38990,
+    "PrecioNormalLleno": 55990,
+    "CondicionesPromo": "Descuento 30 x 6 meses BA TRIO 600 TV Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "TRIO (Internet Fibra 800/800 + MTV Disney Premium MAX + Serv Voz)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 40990,
+    "PrecioNormalLleno": 60990,
+    "CondicionesPromo": "Descuento 32 x 6 meses BA TRIO 800 TV Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "TRIO (Internet Fibra Gamer + MTV Disney Premium MAX + Serv Voz)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 42990,
+    "PrecioNormalLleno": 71990,
+    "CondicionesPromo": "Descuento 40 x 6 meses BA TRIO Fibra Gamer TV Disney Premium MAX"
+  },
+  {
+    "Segmento": "MASIVO",
+    "Plan": "DUO (Internet Fibra 600/600 + IPTV Basico)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 28990,
+    "PrecioNormalLleno": 40990,
+    "CondicionesPromo": "Descuento 30 x 6 meses BA DUO IPTV Basico"
+  },
+  {
+    "Segmento": "BTL",
+    "Plan": "Internet Fibra Optica 600/600",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 14990,
+    "PrecioNormalLleno": 22990,
+    "CondicionesPromo": "Descuento 34 x 6 meses BA 600"
+  },
+  {
+    "Segmento": "BTL",
+    "Plan": "DUO (Internet Fibra 600/600 + IPTV Basico)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 27990,
+    "PrecioNormalLleno": 40990,
+    "CondicionesPromo": "Descuento 32 x 6 meses BA DUO IPTV Basico"
+  },
+  {
+    "Segmento": "BTL",
+    "Plan": "DUO (Internet Fibra 600/600 + MTV Disney Premium MAX)",
+    "BeneficioExtra": "1er Decodificador Adicional Gratis IPTV",
+    "PrecioPromocion": 33990,
+    "PrecioNormalLleno": 50990,
+    "CondicionesPromo": "Descuento 34 x 6 meses BA DUO TV Disney Premium MAX"
+  },
+  {
+    "Segmento": "BTL",
+    "Plan": "DUO (Internet Fibra 800/800 + MTV Disney Premium MAX)",
+    "BeneficioExtra": "1er Decodificador Adicional Gratis IPTV",
+    "PrecioPromocion": 38990,
+    "PrecioNormalLleno": 55990,
+    "CondicionesPromo": "Descuento 31 x 6 meses BA DUO TV Disney Premium MAX"
+  },
+  {
+    "Segmento": "BTL",
+    "Plan": "DUO (Internet Fibra 800/800 + IPTV Basico)",
+    "BeneficioExtra": "Ninguno",
+    "PrecioPromocion": 29990,
+    "PrecioNormalLleno": 45990,
+    "CondicionesPromo": "Descuento 35 x 6 meses BA DUO IPTV Basico"
+  },
+  {
+    "Segmento": "PLAN REGIONES",
+    "Plan": "Internet Fibra Optica 400/400",
+    "BeneficioExtra": "400 beneficio salto velocidad 600",
+    "PrecioPromocion": 12990,
+    "PrecioNormalLleno": 20990,
+    "CondicionesPromo": "Descuento 38 x 6 meses BA 400"
+  }
+]

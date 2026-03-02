@@ -30,6 +30,11 @@ export function useUpsertVenta() {
       if (!venta.workspace_id || !venta.orden) throw new Error('Faltan campos requeridos')
       
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        venta.owner_id = user.id
+      }
+
       const { data, error } = await supabase
         .from('ventas_toa')
         .upsert(venta, { onConflict: 'workspace_id,orden' })

@@ -30,7 +30,7 @@ const navItems = [
   { href: '/registro', label: 'Registro Ventas', icon: Package },
   { href: '/campaigns', label: 'Campañas & Plantillas', icon: Megaphone },
   { href: '/contacts', label: 'Contactos', icon: Users },
-  { href: '/bot', label: 'Super Agente', icon: Zap },
+  { href: '/bot', label: 'Super Agente', icon: Zap, adminOnly: true },
   { href: '/analytics', label: 'Analíticas', icon: BarChart3 },
 ]
 
@@ -79,7 +79,7 @@ export function Sidebar({ userEmail, isAdmin = false }: { userEmail?: string; is
 
       {/* Navegación principal */}
       <nav className="flex-1 flex flex-col py-4 px-3 space-y-1 overflow-hidden">
-        {navItems.map((item) => {
+        {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
           const showBadge = item.badge && totalUnread > 0
           return (

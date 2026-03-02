@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     
     const { data: workspace, error } = await adminClient
       .from('workspaces')
-      .select('id, evolution_instance')
+      .select('id, evolution_instance, settings')
       .eq('owner_id', user.id)
       .single()
 
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       evolutionInstance: workspace?.evolution_instance || null,
-      settings: {},
+      settings: workspace?.settings || {},
       workspaceId: workspace?.id || null
     })
 

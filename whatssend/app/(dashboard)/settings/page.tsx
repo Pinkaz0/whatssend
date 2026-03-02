@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import {
-  Wifi, WifiOff, MessageSquare, Phone, Plus, Trash2, Loader2, Save, X, CheckCircle2, AlertCircle, QrCode, AlertTriangle
+  Wifi, WifiOff, MessageSquare, Phone, Plus, Trash2, Loader2, Save, X, CheckCircle2, AlertCircle, QrCode, AlertTriangle, Mail
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -30,8 +30,13 @@ export default function SettingsPage() {
 
   const [biEmails, setBiEmails] = useState<string[]>([])
   const [newEmail, setNewEmail] = useState('')
+  const [agentPhone, setAgentPhone] = useState('')
+  const [googleEmail, setGoogleEmail] = useState('')
+  const [googleAppKey, setGoogleAppKey] = useState('')
+  const [savingGoogle, setSavingGoogle] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savingPhone, setSavingPhone] = useState(false)
   const [savingEmails, setSavingEmails] = useState(false)
   const [clearing, setClearing] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
@@ -58,7 +63,27 @@ export default function SettingsPage() {
         if (data.settings?.biEmails) {
           setBiEmails(data.settings.biEmails)
         }
+        if (data.settings?.googleEmail) {
+          setGoogleEmail(data.settings.googleEmail)
+        }
+        if (data.settings?.googleAppKey) {
+          setGoogleAppKey(data.settings.googleAppKey)
+        }
         
+        // Cargar el teléfono del perfil del usuario logueado
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('phone')
+            .eq('id', user.id)
+            .single()
+            
+          if (profile?.phone) {
+            setAgentPhone(profile.phone)
+          }
+        }
+
       } catch (err) {
         console.error('Error loading config:', err)
       } finally {
@@ -247,6 +272,66 @@ export default function SettingsPage() {
     }
   }
 
+  const handleSaveGoogle = async () => {
+    setSavingGoogle(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      
+      const { data: workspace } = await supabase
+        .from('workspaces')
+        .select('id, settings')
+        .eq('owner_id', user.id)
+        .single()
+        
+      if (!workspace) return
+      
+      const currentSettings = workspace.settings as any || {}
+      
+      const { error } = await supabase
+        .from('workspaces')
+        .update({
+          settings: {
+            ...currentSettings,
+            googleEmail,
+            googleAppKey
+          }
+        })
+        .eq('id', workspace.id)
+        
+      if (error) throw error
+
+      setNotification({ title: 'Credenciales Guardadas', message: 'La configuración de Google Mail ha sido actualizada.', type: 'success' })
+    } catch (err) {
+      console.error('Save error:', err)
+      setNotification({ title: 'Error', message: 'Ocurrió un error al guardar las credenciales.', type: 'error' })
+    } finally {
+      setSavingGoogle(false)
+    }
+  }
+
+  const handleSavePhone = async () => {
+    setSavingPhone(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ phone: agentPhone })
+        .eq('id', user.id)
+        
+      if (error) throw error
+
+      setNotification({ title: 'Teléfono Guardado', message: 'Camila ahora te notificará a este número.', type: 'success' })
+    } catch (err) {
+      console.error('Save error:', err)
+      setNotification({ title: 'Error', message: 'Ocurrió un error al guardar el teléfono.', type: 'error' })
+    } finally {
+      setSavingPhone(false)
+    }
+  }
+
   const handleCreateInstance = async () => {
     setCreating(true)
     setQrCode(null)
@@ -295,11 +380,41 @@ export default function SettingsPage() {
               <label className="text-[#475569] text-xs mb-1.5 block">{l}</label>
               <input
                 defaultValue={v}
-                className="w-full rounded-lg px-3 py-2.5 text-[#E2E8F0] text-xs focus:outline-none focus:border-emerald-500/40 transition-colors border"
-                style={{ background: '#07090F', borderColor: '#1E2537' }}
+                readOnly
+                className="w-full rounded-lg px-3 py-2.5 text-[#E2E8F0] text-xs focus:outline-none focus:border-emerald-500/40 transition-colors border bg-[#07090F]"
+                style={{ borderColor: '#1E2537' }}
               />
             </div>
           ))}
+        </div>
+
+        {/* Notificaciones de Camila */}
+        <div className="mt-5 pt-4 border-t border-[#141928]">
+          <label className="text-white text-xs font-medium flex items-center gap-2 mb-2">
+            <Phone className="w-3.5 h-3.5 text-emerald-400" />
+            Teléfono para Notificaciones de Camila
+          </label>
+          <p className="text-[#94A3B8] text-[11px] mb-3">
+            Camila te enviará notificaciones por WhatsApp a este número cuando haya quiebres o instalaciones exitosas.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="+56912345678"
+              value={agentPhone}
+              onChange={(e) => setAgentPhone(e.target.value)}
+              className="flex-1 rounded-lg px-3 py-2 text-[#E2E8F0] text-sm focus:outline-none focus:border-emerald-500/40 transition-colors border"
+              style={{ background: '#07090F', borderColor: '#1E2537' }}
+            />
+            <button
+              onClick={handleSavePhone}
+              disabled={savingPhone}
+              className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+            >
+              {savingPhone ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Guardar Número
+            </button>
+          </div>
         </div>
       </Section>
 
@@ -437,6 +552,53 @@ export default function SettingsPage() {
           >
             {savingEmails ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {savingEmails ? 'Guardando...' : 'Guardar Correos BI'}
+          </button>
+        </div>
+      </Section>
+
+      {/* ── Configuración Google Mail ── */}
+      <Section>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-blue-400 font-semibold text-xs flex items-center gap-2">
+            <Mail className="w-4 h-4" /> Correo Institucional (Google)
+          </p>
+        </div>
+        <p className="text-[#475569] text-xs mb-4">Credenciales SMTP/IMAP para enviar y leer correos con el Backoffice de Ingreso y TOA.</p>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="text-[#475569] text-xs mb-1.5 block">Correo Electrónico (Gmail / Google Workspace)</label>
+            <input
+              type="email"
+              value={googleEmail}
+              onChange={(e) => setGoogleEmail(e.target.value)}
+              placeholder="ventas@tuempresa.com"
+              className="w-full rounded-lg px-3 py-2.5 text-[#E2E8F0] text-xs focus:outline-none focus:border-blue-500/40 transition-colors border bg-[#07090F] placeholder-[#334155]"
+              style={{ borderColor: '#1E2537' }}
+            />
+          </div>
+          <div>
+            <label className="text-[#475569] text-xs mb-1.5 block">Contraseña de Aplicación (App Key)</label>
+            <input
+              type="password"
+              value={googleAppKey}
+              onChange={(e) => setGoogleAppKey(e.target.value)}
+              placeholder="••••••••••••••••"
+              className="w-full rounded-lg px-3 py-2.5 text-[#E2E8F0] text-xs focus:outline-none focus:border-blue-500/40 transition-colors border bg-[#07090F] placeholder-[#334155]"
+              style={{ borderColor: '#1E2537' }}
+            />
+            <p className="text-[#64748B] text-[10px] mt-1.5">No uses tu clave personal. Genera una <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">Contraseña de Aplicación aquí</a>.</p>
+          </div>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-[#1E2537]">
+          <button 
+            onClick={handleSaveGoogle}
+            disabled={savingGoogle}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-blue-500 text-white text-xs font-semibold hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-50"
+          >
+            {savingGoogle ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {savingGoogle ? 'Guardando...' : 'Guardar Credenciales'}
           </button>
         </div>
       </Section>

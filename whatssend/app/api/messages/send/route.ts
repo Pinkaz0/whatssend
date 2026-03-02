@@ -35,12 +35,12 @@ export async function POST(request: NextRequest) {
     // 3. Verificar que el usuario es dueño del workspace
     const { data: workspace, error: wsError } = await supabase
       .from('workspaces')
-      .select('id, evolution_instance')
+      .select('id, evolution_instance, ultramsg_instance_id, ultramsg_token')
       .eq('id', workspaceId)
       .eq('owner_id', user.id)
       .single()
 
-    if (wsError || !workspace || !workspace.evolution_instance) {
+    if (wsError || !workspace) {
       return NextResponse.json(
         { error: 'Workspace no encontrado o instancia no configurada' },
         { status: 403 }
@@ -83,26 +83,57 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 6. Enviar vía Evolution API
+    // 6. Enviar vía la Pasarela Correspondiente
     try {
-      const evolution = createEvolutionClient(
-        null,
-        null,
-        workspace.evolution_instance
-      )
-
       // Normalize phone before sending (remove +, spaces, etc)
       const cleanPhone = contact.phone.replace(/\D/g, '')
+      let isSent = false
+      let msgId = null
+      let evolutionId = null
 
-      const result = await evolution.sendMessage(cleanPhone, message)
+      const isLegacyUser = user.email?.toLowerCase() === 'erml1903@hotmail.com'
 
-      if (result.ok) {
-        // 7. Actualizar estado a 'sent' con ID de Evolution
+      if (isLegacyUser) {
+        // Enviar por UltraMsg
+        const { createUltraMsgClient } = await import('@/lib/ultramsg/client')
+        // Usa token de base de datos o env como lo hacía antes
+        const ultramsg = createUltraMsgClient(workspace.ultramsg_instance_id, workspace.ultramsg_token)
+        const result = await ultramsg.sendMessage(cleanPhone, message)
+        
+        if (result.ok) {
+           isSent = true
+           msgId = msg.id
+        } else {
+           throw new Error(result.error)
+        }
+      } else {
+        // Enviar vía Evolution API (Default)
+        const { createEvolutionClient } = await import('@/lib/whatsapp/evolution')
+        const evolution = createEvolutionClient(
+          null,
+          null,
+          workspace.evolution_instance
+        )
+
+        const result = await evolution.sendMessage(cleanPhone, message)
+
+        if (result.ok) {
+          isSent = true
+          msgId = msg.id
+          evolutionId = result.data?.key?.id
+        } else {
+           console.error('[Send] Evolution API send failed:', result.error)
+           throw new Error(result.error)
+        }
+      }
+
+      if (isSent) {
+        // 7. Actualizar estado a 'sent'
         await supabase
           .from('messages')
           .update({
             status: 'sent',
-            evolution_message_id: result.data?.key?.id || null,
+            evolution_message_id: evolutionId || null,
             sent_at: new Date().toISOString(),
           })
           .eq('id', msg.id)
@@ -110,24 +141,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           success: true,
           messageId: msg.id,
-          evolutionId: result.data?.key?.id,
+          evolutionId: evolutionId,
         })
-      } else {
-        // 8. Marcar como 'failed'
-        await supabase
-          .from('messages')
-          .update({ status: 'failed' })
-          .eq('id', msg.id)
-
-        console.error('[Send] Evolution API send failed:', result.error)
-        return NextResponse.json(
-          {
-             success: false,
-             messageId: msg.id,
-             error: result.error,
-          },
-          { status: 502 }
-        )
       }
     } catch (sendErr) {
       // Marcar como failed si hay error de red

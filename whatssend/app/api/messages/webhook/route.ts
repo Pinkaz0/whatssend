@@ -201,7 +201,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Helper para Bot logic (extraído para limpieza)
 // Helper para Bot logic
 async function handleBotReply(
   supabase: any,
@@ -212,8 +211,104 @@ async function handleBotReply(
   fromMe: boolean
 ) {
   try {
-    // Si fue mandado por nosotros, no respondemos con el Bot automáticamente.
+    // 0. Detectar Vendedor (Modo Asistente / Copiloto)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, full_name, phone')
+      .eq('phone', phone)
+      .single()
+
+    const isCopilotDirectCommand = fromMe && profile?.phone && phone.includes(profile.phone)
+
+    if (profile || isCopilotDirectCommand) {
+      console.log(`[Webhook] Mensaje de un Vendor detectado (${profile?.full_name || phone}). Activando Copiloto Camila...`)
+      const { processVendorAssistantMessage } = await import('@/lib/ai/vendor-assistant')
+      await processVendorAssistantMessage(supabase, workspaceId, contact, messageBody, profile)
+      return
+    }
+
+    // Si fue mandado por nosotros (y no fue el comando directo anterior), no respondemos con el Bot a un cliente.
     if (fromMe) return;
+
+    // 0. Interceptar RESPUESTAS DEL BACKOFFICE (Evita que Camila le venda a Andrea)
+    const { INITIAL_BA_PERSONAS } = await import('@/lib/config/backoffice')
+    
+    // Convertir el phone de BD backoffice (ej: "+56 9 5176 9267") a números puros
+    const isBackoffice = INITIAL_BA_PERSONAS.some(p => {
+      const limpio = p.contacto.replace(/\D/g, '')
+      return phone.includes(limpio) || limpio.includes(phone)
+    })
+
+    if (isBackoffice) {
+      console.log('[Webhook] Mensaje proviene de un número BackOffice (Andrea/BP). Interceptando...')
+      
+      // Buscar al cliente más reciente que esté esperando respuesta de Prechequeo
+      const { data: waitingSession } = await supabase
+        .from('agent_sessions')
+        .select('id, contact_id')
+        .eq('workspace_id', workspaceId)
+        .in('estado', ['PRECHEQUE_PENDIENTE', 'PRECHEQUEO_PENDIENTE'])
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (waitingSession) {
+        console.log(`[Webhook] Inyectando respuesta de BackOffice a la sesión del cliente: ${waitingSession.id}`)
+        
+        // Simular que el mensaje interno lo dijo el System (la respuesta de Andrea)
+        await supabase.from('agent_messages').insert({
+          session_id: waitingSession.id,
+          role: 'system',
+          content: `[RESPUESTA DEL BACKOFFICE / ANDREA]:\n"${messageBody}"\n\nInstrucción para Camila: Evalúa el Escenario (A: RUT malo, B: Dir mala, C: Todo OK). Si es C, procede a ofrecer. Si es A o B, explica sin tecnicismos.`
+        })
+
+        // Avanzar el cliente a EVALUACION_RESULTADO para que Camila decida qué hacer
+        await supabase
+          .from('agent_sessions')
+          .update({ estado: 'EVALUACION_RESULTADO' })
+          .eq('id', waitingSession.id)
+          
+        // DESPERTAR A CAMILA PARA QUE LE CONTESTE AL CLIENTE
+        // 1. Obtener el teléfono del cliente
+        const { data: customerContact } = await supabase
+          .from('contacts')
+          .select('phone')
+          .eq('id', waitingSession.contact_id)
+          .single()
+          
+        if (customerContact) {
+          console.log(`[Webhook] Despertando a Camila para que le conteste al cliente: ${customerContact.phone}`)
+          
+          // Obtener config para Camila
+          const { data: workspace } = await supabase
+            .from('workspaces')
+            .select('bot_enabled, bot_system_prompt, bot_custom_instructions, evolution_instance')
+            .eq('id', workspaceId)
+            .single()
+
+          if (workspace?.bot_enabled && workspace.evolution_instance) {
+            const { processAgentMessage } = await import('@/lib/ai/sales-agent')
+            const agentResponse = await processAgentMessage(
+              supabase,
+              workspaceId,
+              customerContact.phone,
+              `[SISTEMA INTERNO]: Acabo de recibir la confirmación de Andrea del backoffice. Procesa el resultado en estado EVALUACION_RESULTADO.`,
+              workspace
+            )
+
+            if (agentResponse) {
+              const { createEvolutionClient } = await import('@/lib/whatsapp/evolution')
+              const evolution = createEvolutionClient(null, null, workspace.evolution_instance)
+              await evolution.sendMessage(customerContact.phone, agentResponse)
+            }
+          }
+        }
+      } else {
+        console.log('[Webhook] Backoffice respondió pero no hay clientes en PRECHEQUE_PENDIENTE.')
+      }
+      
+      return; // Cortar el flujo. No queremos que Camila se presente a Andrea.
+    }
 
     // 1. Obtener configuración del workspace/bot
     const { data: workspace } = await supabase
@@ -226,112 +321,44 @@ async function handleBotReply(
       return
     }
 
-    if (!workspace.evolution_instance) return
+    if (!workspace?.bot_enabled || !workspace.evolution_instance) return
 
-    // 2. Obtener historial reciente (últimos 10 mensajes)
-    const { data: history } = await supabase
-      .from('messages')
-      .select('direction, body')
-      .eq('contact_id', contact.id)
-      .order('sent_at', { ascending: false })
-      .limit(10)
-
-    // Formatear historial para OpenAI
-    // Reverse para orden cronológico
-    const formattedHistory = (history || [])
-      .reverse()
-      .map((m: any) => ({
-        role: m.direction === 'inbound' ? 'user' : 'assistant',
-        content: m.body || ''
-      }))
-
-    // 3. Procesar con AI (Dynamic Import to avoid circular deps if any)
-    const { processBotMessage } = await import('@/lib/ai/sales-bot')
+    // 2. Procesar con Camila (Super Agente)
+    const { processAgentMessage } = await import('@/lib/ai/sales-agent')
     
-    // Simular Contact type
-    const contactData = {
-      ...contact,
-      rut: contact.rut || null,
-      address: contact.address || null,
-      comuna: contact.comuna || null,
-      email: contact.email || null,
-      alt_phone: contact.alt_phone || null
-    }
-
-    const botResponse = await processBotMessage(
+    console.log('[Webhook] Activando Camila para', phone)
+    const agentResponse = await processAgentMessage(
       supabase,
       workspaceId,
-      contactData,
-      formattedHistory,
-      workspace.bot_custom_instructions,
-      workspace.bot_system_prompt || undefined
+      phone, // Usamos phone como remoteJid para consistencia
+      messageBody,
+      workspace
     )
 
-    if (!botResponse) return
+    if (!agentResponse) return
 
-    // 4. Enviar Respuesta
+    // 3. Enviar Respuesta de Camila vía Evolution API
     const { createEvolutionClient } = await import('@/lib/whatsapp/evolution')
     const evolution = createEvolutionClient(null, null, workspace.evolution_instance)
     
-    // Log para depuración
-    console.log('[Bot] Response:', botResponse.message)
-    console.log('[Bot] Intent:', botResponse.intent)
+    console.log('[Camila] Response:', agentResponse)
+    const sendResult = await evolution.sendMessage(phone, agentResponse)
     
-    const sendResult = await evolution.sendMessage(phone, botResponse.message)
-
-    // 5. Guardar Respuesta en DB
+    // 4. Guardar Respuesta en DB (Historial General del CRM)
     await supabase.from('messages').insert({
       workspace_id: workspaceId,
       contact_id: contact.id,
       direction: 'outbound',
-      body: botResponse.message,
+      body: agentResponse,
       status: sendResult.ok ? 'sent' : 'failed',
       evolution_message_id: sendResult.ok ? sendResult.data?.key?.id || null : null,
       sent_at: new Date().toISOString(),
     })
 
-    // 6. Actualizar Contacto con datos extraídos (si los hay)
-    if (botResponse.extracted) {
-      const updates: any = {}
-      if (botResponse.extracted.rut) updates.rut = botResponse.extracted.rut
-      if (botResponse.extracted.address) updates.address = botResponse.extracted.address
-      if (botResponse.extracted.comuna) updates.comuna = botResponse.extracted.comuna
-      if (botResponse.extracted.email) updates.email = botResponse.extracted.email
-      if (botResponse.extracted.alt_phone) updates.alt_phone = botResponse.extracted.alt_phone
-      
-      if (Object.keys(updates).length > 0) {
-        console.log('[Bot] Updating contact info:', updates)
-        await supabase.from('contacts').update(updates).eq('id', contact.id)
-      }
-    }
-
-    // 7. Manejo de Pipeline (Básico por ahora)
-    // Si detecta 'interested' o 'ready_to_buy', crear o actualizar lead en pipeline
-    if (['interested', 'ready_to_buy'].includes(botResponse.intent)) {
-      // Verificar si ya existe lead
-      const { data: existingLead } = await supabase
-        .from('pipeline_leads')
-        .select('id')
-        .eq('contact_id', contact.id)
-        .maybeSingle()
-      
-      if (!existingLead) {
-        await supabase.from('pipeline_leads').insert({
-          workspace_id: workspaceId,
-          contact_id: contact.id,
-          status: 'interested',
-          rut: botResponse.extracted.rut || contact.rut,
-          full_name: contact.name,
-          address: botResponse.extracted.address || contact.address,
-          comuna: botResponse.extracted.comuna || contact.comuna,
-          email: botResponse.extracted.email || contact.email,
-        })
-        console.log('[Bot] New lead created in pipeline')
-      }
-    }
-
+    // 5. Opcional: Notificar al vendedor si hubo un evento importante (ej. Venta Cerrada)
+    // Extraeremos de events o states más adelante.
   } catch (err) {
-    console.warn('[Webhook] Bot logic error:', err)
+    console.warn('[Webhook] Agent logic error:', err)
   }
 }
 

@@ -29,17 +29,28 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Configure Transporter
-    // Note: In production, these should be environment variables.
-    // user should configure SMTP in specific settings or env.
+    const { data: workspace } = await supabase
+      .from('workspaces')
+      .select('settings')
+      .eq('owner_id', user.id)
+      .single()
+
+    const wsSettings = (workspace?.settings as any) || {}
+    const googleEmail = wsSettings.googleEmail
+    const googleAppKey = wsSettings.googleAppKey
+
     const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'
     const smtpPort = parseInt(process.env.SMTP_PORT || '587')
-    const smtpUser = process.env.SMTP_USER
-    const smtpPass = process.env.SMTP_PASS
-    const backofficeEmail = process.env.BACKOFFICE_EMAIL
+    const smtpUser = googleEmail || process.env.SMTP_USER
+    const smtpPass = googleAppKey || process.env.SMTP_PASS
+    
+    // Si backofficeEmail no está en env, podríamos usar los biEmails configurados,
+    // pero para mantener compatibilidad, usamos el env o el primer biEmail
+    const backofficeEmail = process.env.BACKOFFICE_EMAIL || (wsSettings.biEmails && wsSettings.biEmails[0])
 
     if (!smtpUser || !smtpPass || !backofficeEmail) {
-      console.error('[Backoffice] Missing SMTP config')
-      return NextResponse.json({ error: 'Server SMTP configuration missing' }, { status: 500 })
+      console.error('[Backoffice] Missing SMTP config. User needs to configure Google Mail in Settings.')
+      return NextResponse.json({ error: 'Configuración SMTP de Google faltante. Configúrala en Ajustes.' }, { status: 500 })
     }
 
     const transporter = nodemailer.createTransport({
