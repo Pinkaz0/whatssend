@@ -28,21 +28,49 @@ export function useUpsertVenta() {
   return useMutation({
     mutationFn: async (venta: Partial<VentaTOA>) => {
       if (!venta.workspace_id || !venta.orden) throw new Error('Faltan campos requeridos')
-      
+
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         venta.owner_id = user.id
       }
 
-      const { data, error } = await supabase
+      // Primero verificamos si existe basado en workspace_id y orden
+      const { data: existing } = await supabase
         .from('ventas_toa')
-        .upsert(venta, { onConflict: 'workspace_id,orden' })
-        .select()
-        .single()
+        .select('id')
+        .eq('workspace_id', venta.workspace_id)
+        .eq('orden', venta.orden)
+        .maybeSingle()
 
-      if (error) throw error
-      return data as VentaTOA
+      let result;
+      let opError;
+
+      if (existing) {
+        // Update
+        const { data, error } = await supabase
+          .from('ventas_toa')
+          .update(venta)
+          .eq('id', existing.id)
+          .select()
+          .single()
+        result = data
+        opError = error
+      } else {
+        // Insert
+        const { data, error } = await supabase
+          .from('ventas_toa')
+          .insert(venta)
+          .select()
+          .single()
+        result = data
+        opError = error
+      }
+
+      if (opError) throw opError
+      return result as VentaTOA
+
+
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ventas_toa'] })
