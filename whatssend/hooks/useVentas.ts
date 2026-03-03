@@ -31,9 +31,6 @@ export function useUpsertVenta() {
 
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        venta.owner_id = user.id
-      }
 
       // Primero verificamos si existe basado en workspace_id y orden
       const { data: existing } = await supabase
