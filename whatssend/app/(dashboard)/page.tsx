@@ -98,7 +98,7 @@ export default function DashboardPage() {
   })
 
   // Real sales status data
-  const countState = (state: string) => ventas.filter((v: any) => v.estado === state).length;
+  const countState = (state: string) => ventas.filter((v: any) => v?.estado?.toUpperCase()?.trim() === state).length;
   const totalVentas = ventas.length || 1; // prevent div 0
   const salesStatus = [
     { label: 'Agendada', count: countState('AGENDADA'), color: '#38bdf8', pct: (countState('AGENDADA') / totalVentas) * 100 },
@@ -112,7 +112,7 @@ export default function DashboardPage() {
   const alerts: { color: string; title: string; desc: string; action: string }[] = []
 
   // No Realizadas
-  const noRealizadas = ventas.filter((v: any) => v.estado === 'NO REALIZADA')
+  const noRealizadas = ventas.filter((v: any) => v?.estado?.toUpperCase()?.trim() === 'NO REALIZADA')
   noRealizadas.forEach((v: any) => {
     alerts.push({
       color: '#f43f5e',

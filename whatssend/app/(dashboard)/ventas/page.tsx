@@ -40,7 +40,7 @@ const TOA_FIELDS = [
 
 // ─── Badge Component ───────────────────────────────────────────────────────────
 function Badge({ estado }: { estado: string }) {
-  const e = EC[estado] || EC['PENDIENTE']
+  const e = EC[estado?.toUpperCase()?.trim()] || EC['PENDIENTE']
   return (
     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${e.bg} ${e.text} border ${e.border}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${e.dot}`} />
@@ -358,10 +358,10 @@ export default function VentasPage() {
   // KPIs
   const kpis = [
     { l: 'Total', v: displayVentas.length.toString(), c: '#fff' },
-    { l: 'Agendadas', v: displayVentas.filter(v => v.estado === 'AGENDADA').length.toString(), c: '#38bdf8' },
-    { l: 'Completadas', v: displayVentas.filter(v => v.estado === 'COMPLETADA').length.toString(), c: '#10b981' },
-    { l: 'No Realizadas', v: displayVentas.filter(v => v.estado === 'NO REALIZADA').length.toString(), c: '#f43f5e' },
-    { l: 'Pendientes', v: displayVentas.filter(v => v.estado === 'PENDIENTE').length.toString(), c: '#64748b' },
+    { l: 'Agendadas', v: displayVentas.filter(v => v?.estado?.toUpperCase()?.trim() === 'AGENDADA').length.toString(), c: '#38bdf8' },
+    { l: 'Completadas', v: displayVentas.filter(v => v?.estado?.toUpperCase()?.trim() === 'COMPLETADA').length.toString(), c: '#10b981' },
+    { l: 'No Realizadas', v: displayVentas.filter(v => v?.estado?.toUpperCase()?.trim() === 'NO REALIZADA').length.toString(), c: '#f43f5e' },
+    { l: 'Pendientes', v: displayVentas.filter(v => v?.estado?.toUpperCase()?.trim() === 'PENDIENTE').length.toString(), c: '#64748b' },
   ]
 
   return (
