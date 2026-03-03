@@ -130,11 +130,15 @@ Si el sistema te ha enviado un mensaje que inicia con "[SISTEMA INTERNO]", signi
                 const header = `🚨 *ESCALACIÓN DESDE VENDEDOR (${vendorName})* 🚨\n📍 Área: ${area}\n\n`
                 
                 // Formatear el teléfono de destino
-                let targetPhone = destino.replace(/\D/g, '')
-                if (!targetPhone.includes('@')) targetPhone = `${targetPhone}@s.whatsapp.net`
+                let targetPhone = destino?.replace(/\D/g, '') || ''
+                if (targetPhone && !targetPhone.includes('@')) targetPhone = `${targetPhone}@s.whatsapp.net`
 
-                await evoClient.sendMessage(targetPhone, header + mensaje_urgencia)
-                return `El caso fue derivado exitosamente al WhatsApp de ${area} (${destino}).`
+                if (targetPhone) {
+                  await evoClient.sendMessage(targetPhone, header + mensaje_urgencia)
+                  return `El caso fue derivado exitosamente al WhatsApp de ${area} (${destino}).`
+                } else {
+                  return `No se pudo encontrar un teléfono válido para escalar a ${area}.`
+                }
               }
             }
             return 'No se encontró el WhatsApp destino del área solicitada. Recomiéndale al vendedor llamar directamente.'
@@ -159,21 +163,25 @@ Si el sistema te ha enviado un mensaje que inicia con "[SISTEMA INTERNO]", signi
     if (wsData?.evolution_instance) {
       const evoClient = createEvolutionClient(null, null, wsData.evolution_instance)
       
-      // Formatear contact.phone
-      let targetPhone = contact.phone.replace(/\D/g, '')
-      if (!targetPhone.includes('@')) targetPhone = `${targetPhone}@s.whatsapp.net`
+      // Formatear contact.phone (Asegurarse que exista)
+      let targetPhone = contact?.phone ? contact.phone.replace(/\D/g, '') : null
+      if (targetPhone && !targetPhone.includes('@')) targetPhone = `${targetPhone}@s.whatsapp.net`
 
-      await evoClient.sendMessage(targetPhone, answer)
+      if (targetPhone) {
+        await evoClient.sendMessage(targetPhone, answer)
 
-      await supabase.from('messages').insert({
-        workspace_id: workspaceId,
-        contact_id: contact.id,
-        direction: 'outbound',
-        body: answer,
-        status: 'sent',
-        evolution_message_id: null,
-        sent_at: new Date().toISOString()
-      })
+        await supabase.from('messages').insert({
+          workspace_id: workspaceId,
+          contact_id: contact.id,
+          direction: 'outbound',
+          body: answer,
+          status: 'sent',
+          evolution_message_id: null,
+          sent_at: new Date().toISOString()
+        })
+      } else {
+        console.error('[VendorAssistant] No se pudo responder, contact.phone es nulo o indefinido.', contact)
+      }
     }
   }
 }
