@@ -2,6 +2,8 @@
 
 import { useWorkspace } from '@/hooks/useWorkspace'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { useVentas } from '@/hooks/useVentas'
+import { useConversations } from '@/hooks/useConversations'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Activity, MessageSquare, Users, AlertTriangle,
@@ -80,8 +82,10 @@ export default function DashboardPage() {
   const router = useRouter()
   const { workspaceId, isLoading: wsLoading } = useWorkspace()
   const { data: analytics, isLoading: analyticsLoading } = useAnalytics(workspaceId)
+  const { data: ventas = [], isLoading: ventasLoading } = useVentas(workspaceId)
+  const { data: conversations = [], isLoading: convsLoading } = useConversations(workspaceId)
 
-  const loading = wsLoading || analyticsLoading
+  const loading = wsLoading || analyticsLoading || ventasLoading || convsLoading
 
   // Greeting based on time of day
   const hour = new Date().getHours()
@@ -93,36 +97,43 @@ export default function DashboardPage() {
     day: 'numeric'
   })
 
-  // Mock sales status data (will connect to real data in backend stage)
+  // Real sales status data
+  const countState = (state: string) => ventas.filter((v: any) => v.estado === state).length;
+  const totalVentas = ventas.length || 1; // prevent div 0
   const salesStatus = [
-    { label: 'Agendada', count: 1, color: '#38bdf8', pct: 20 },
-    { label: 'En Proceso', count: 1, color: '#fbbf24', pct: 20 },
-    { label: 'Completada', count: 1, color: '#10b981', pct: 20 },
-    { label: 'No Realizada', count: 1, color: '#f43f5e', pct: 20 },
-    { label: 'Pendiente', count: 1, color: '#64748b', pct: 20 },
+    { label: 'Agendada', count: countState('AGENDADA'), color: '#38bdf8', pct: (countState('AGENDADA') / totalVentas) * 100 },
+    { label: 'En Proceso', count: countState('EN PROCESO'), color: '#fbbf24', pct: (countState('EN PROCESO') / totalVentas) * 100 },
+    { label: 'Completada', count: countState('COMPLETADA'), color: '#10b981', pct: (countState('COMPLETADA') / totalVentas) * 100 },
+    { label: 'No Realizada', count: countState('NO REALIZADA'), color: '#f43f5e', pct: (countState('NO REALIZADA') / totalVentas) * 100 },
+    { label: 'Pendiente', count: countState('PENDIENTE'), color: '#64748b', pct: (countState('PENDIENTE') / totalVentas) * 100 },
   ]
 
-  // Mock alerts (will connect to real data in backend stage)
-  const alerts = [
-    {
+  // Real alerts based on sales and messages
+  const alerts: { color: string; title: string; desc: string; action: string }[] = []
+
+  // No Realizadas
+  const noRealizadas = ventas.filter((v: any) => v.estado === 'NO REALIZADA')
+  noRealizadas.forEach((v: any) => {
+    alerts.push({
       color: '#f43f5e',
-      title: 'Ana Martínez — No Realizada',
-      desc: 'Sin acceso al edificio · Pendiente reagendar con Backoffice Agenda',
+      title: `${v.cliente || 'Desconocido'} — No Realizada`,
+      desc: (v.obs || 'Requiere atención').slice(0, 100),
       action: '/ventas'
-    },
-    {
-      color: '#fbbf24',
-      title: 'Carmen López — Esperando código BO',
-      desc: 'Biometría OK · Monitorear código en Excel de ingreso',
-      action: '/ventas'
-    },
-    {
+    })
+  })
+
+  // Unread messages
+  const unreadConvs = conversations.filter((c: any) => c.unread_count > 0)
+  if (unreadConvs.length > 0) {
+    const totalUnread = unreadConvs.reduce((acc: number, c: any) => acc + c.unread_count, 0)
+    const names = unreadConvs.map((c: any) => `${c.contact_name || c.contact_phone} (${c.unread_count})`).join(', ')
+    alerts.push({
       color: '#38bdf8',
-      title: '6 mensajes sin responder',
-      desc: 'Carmen (3), María (2), Juan (1) · Bandeja de entrada',
+      title: `${totalUnread} mensaje${totalUnread !== 1 ? 's' : ''} sin responder`,
+      desc: `${names} · Bandeja de entrada`,
       action: '/inbox'
-    },
-  ]
+    })
+  }
 
   return (
     <div className="p-6 h-full overflow-auto space-y-5">
@@ -165,7 +176,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="No Realizadas"
-          value={0}
+          value={countState('NO REALIZADA')}
           sub="requieren atención"
           icon={AlertTriangle}
           accent="#f43f5e"
