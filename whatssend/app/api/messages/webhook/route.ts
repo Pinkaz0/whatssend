@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { after } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { extractPhoneFromUltraMsg } from '@/lib/utils/phone'
 
@@ -31,31 +32,44 @@ export async function POST(request: NextRequest) {
     }
     console.log('[Webhook] 3. Body parsed. Event:', body?.event)
 
-    // Filtramos solo el evento de nuevos mensajes o envío (Evolution API usa messages.upsert / send.message)
-    const allowedEvents = ['messages.upsert', 'messages.update', 'send.message']
+    // Filtramos solo el evento de nuevos mensajes o envío (Evolution API usa messages.upsert / send.message, UltraMsg usa message_received / message_create)
+    const allowedEvents = ['messages.upsert', 'messages.update', 'send.message', 'message_received', 'message_create']
     const event = body?.event as string
     
     // Si no tiene event pero tiene data, intentamos procesar, de lo contrario salimos temprano
-    if (event && !allowedEvents.includes(event.toLowerCase())) {
-        console.log('[Webhook] 5. SKIP: Ignored non-message event:', event)
+    // UltraMsg tira el event en body.event_type a veces
+    const eventType = event || body?.event_type
+    
+    if (eventType && !allowedEvents.includes(eventType.toLowerCase())) {
+        console.log('[Webhook] 5. SKIP: Ignored non-message event:', eventType)
         return NextResponse.json({ status: 'ok', message: 'Ignored non-message event' })
     }
 
     const data = body.data || body
 
-    // Extraer variables dependiento del formato exacto de Evolution API
-    const remoteJid = data?.key?.remoteJid || data?.remoteJid || ''
-    const fromMe = data?.key?.fromMe || false
-    const evolutionMessageId = data?.key?.id || data?.id || null
+    // Extraer variables dependiento del formato exacto
+    // Soporte Evolution API:
+    let remoteJid = data?.key?.remoteJid || data?.remoteJid || ''
+    let fromMe = data?.key?.fromMe || false
+    let evolutionMessageId = data?.key?.id || data?.id || null
     
-    // Obtener el texto (extendedTextMessage.text o conversation)
+    // Soporte UltraMsg:
+    if (data?.from && data?.to && !remoteJid) {
+      fromMe = data.from.includes(data.to) ? true : (eventType === 'message_create' || data?.fromMe === true);
+      remoteJid = fromMe ? data.to : data.from;
+      evolutionMessageId = data.id || null;
+    }
+
+    // Obtener el texto
     let messageText = ''
-    if (data?.message?.conversation) {
+    if (data?.message?.conversation) { // Evolution API texto
         messageText = data.message.conversation
-    } else if (data?.message?.extendedTextMessage?.text) {
+    } else if (data?.message?.extendedTextMessage?.text) { // Evolution API respuesta
         messageText = data.message.extendedTextMessage.text
-    } else if (data?.text) {
-        messageText = data.text // Fallback
+    } else if (data?.text) { // Text simple Evolution
+        messageText = data.text 
+    } else if (data?.body) { // UltraMsg texto
+        messageText = data.body
     }
 
     console.log('[Webhook] 4. Payload extraído:', {
@@ -187,10 +201,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Message save failed' }, { status: 500 })
     }
 
-    // 9. Bot Auto-reply (Simplificado para no bloquear)
-    // ... (lógica de bot existente o mover a background job) ...
-    // Por ahora mantenemos la lógica existente pero en try/catch silencioso
-    void handleBotReply(supabase, workspaceId, contact, phone, messageText, fromMe)
+    // 9. Bot Auto-reply (Procesado en background garantizado por after() de Next.js)
+    after(async () => {
+      await handleBotReply(supabase, workspaceId, contact, phone, messageText, fromMe)
+    })
 
     console.log('[Webhook] 11. OK — respondiendo 200')
     return NextResponse.json({ status: 'ok' })
