@@ -4,38 +4,38 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Plus, Upload, RefreshCw, Download, Eye, Send,
-  CalendarClock, Mail, AlertTriangle, X, Check
+  CalendarClock, Mail, AlertTriangle, X, Check, Trash2
 } from 'lucide-react'
 
 import { useWorkspace } from '@/hooks/useWorkspace'
-import { useVentas, useUpsertVenta } from '@/hooks/useVentas'
+import { useVentas, useUpsertVenta, useDeleteVenta } from '@/hooks/useVentas'
 import type { VentaTOA } from '@/types/venta-toa'
 import { createClient } from '@/lib/supabase/client'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const EC: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-  'AGENDADA':     { bg: 'bg-sky-500/10',    text: 'text-sky-400',     border: 'border-sky-500/20',     dot: 'bg-sky-400' },
-  'EN PROCESO':   { bg: 'bg-amber-500/10',  text: 'text-amber-400',   border: 'border-amber-500/20',   dot: 'bg-amber-400' },
-  'NO REALIZADA': { bg: 'bg-rose-500/10',   text: 'text-rose-400',    border: 'border-rose-500/20',    dot: 'bg-rose-400' },
-  'COMPLETADA':   { bg: 'bg-emerald-500/10',text: 'text-emerald-400', border: 'border-emerald-500/20', dot: 'bg-emerald-400' },
-  'PENDIENTE':    { bg: 'bg-slate-500/10',  text: 'text-slate-400',   border: 'border-slate-500/20',   dot: 'bg-slate-500' },
+  'AGENDADA': { bg: 'bg-sky-500/10', text: 'text-sky-400', border: 'border-sky-500/20', dot: 'bg-sky-400' },
+  'EN PROCESO': { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20', dot: 'bg-amber-400' },
+  'NO REALIZADA': { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/20', dot: 'bg-rose-400' },
+  'COMPLETADA': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', dot: 'bg-emerald-400' },
+  'PENDIENTE': { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/20', dot: 'bg-slate-500' },
 }
 
 const TOA_FIELDS = [
-  { key: 'orden',         label: '🔢 Orden' },
-  { key: 'estado',        label: '📊 Estado' },
-  { key: 'cliente',       label: '👤 Cliente' },
-  { key: 'rut',           label: '🪪 RUT' },
-  { key: 'direccion',     label: '📍 Dirección' },
-  { key: 'telefono',      label: '📞 Teléfonos' },
+  { key: 'orden', label: '🔢 Orden' },
+  { key: 'estado', label: '📊 Estado' },
+  { key: 'cliente', label: '👤 Cliente' },
+  { key: 'rut', label: '🪪 RUT' },
+  { key: 'direccion', label: '📍 Dirección' },
+  { key: 'telefono', label: '📞 Teléfonos' },
   { key: 'fecha_emision', label: '📆 Fecha Emisión' },
-  { key: 'fecha_agenda',  label: '📅 Fecha Agenda' },
-  { key: 'bloque',        label: '⏰ Bloque Horario' },
-  { key: 'ventana',       label: '🚪 Ventana Llegada' },
-  { key: 'fibra',         label: '📌 Fibra' },
-  { key: 'obs',           label: '🗒️ Observaciones' },
-  { key: 'tecnico',       label: '🛠️ Técnico' },
+  { key: 'fecha_agenda', label: '📅 Fecha Agenda' },
+  { key: 'bloque', label: '⏰ Bloque Horario' },
+  { key: 'ventana', label: '🚪 Ventana Llegada' },
+  { key: 'fibra', label: '📌 Fibra' },
+  { key: 'obs', label: '🗒️ Observaciones' },
+  { key: 'tecnico', label: '🛠️ Técnico' },
 ]
 
 // ─── Badge Component ───────────────────────────────────────────────────────────
@@ -115,12 +115,14 @@ export default function VentasPage() {
   const { workspaceId } = useWorkspace()
   const { data: ventas = [], isLoading } = useVentas(workspaceId)
   const upsertVenta = useUpsertVenta()
+  const deleteVenta = useDeleteVenta()
 
   const [localPlaceholders, setLocalPlaceholders] = useState<VentaTOA[]>([])
   const [sel, setSel] = useState<VentaTOA | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [updating, setUpdating] = useState<string | null>(null)
   const [updatingAll, setUpdatingAll] = useState(false)
+  const [deleting, setDeleting] = useState<string | null>(null)
   const [importingExcel, setImportingExcel] = useState(false)
   const [loadingOrders, setLoadingOrders] = useState<Set<string>>(new Set())
   const [sendingMsg, setSendingMsg] = useState(false)
@@ -129,19 +131,19 @@ export default function VentasPage() {
 
   // Mezclar ventas de DB con placeholders locales
   const displayVentas = [
-    ...localPlaceholders.filter(p => !ventas.find(v => v.orden === p.orden)), 
+    ...localPlaceholders.filter(p => !ventas.find(v => v.orden === p.orden)),
     ...ventas
-  ].sort((a,b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+  ].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
 
   const handleAddOrder = async (orden: string) => {
     if (!workspaceId) return
     const isNew = !displayVentas.find(v => v.orden === orden)
     if (isNew) {
       const placeholder: VentaTOA = {
-         id: `temp-${orden}`, workspace_id: workspaceId,
-         orden, estado: 'PENDIENTE', cliente: 'Buscando en TOA...', rut: '—', fibra: '—',
-         fecha_emision: '—', fecha_agenda: '—', bloque: '—', ventana: '—', tecnico: '—', obs: '', telefono: '', direccion: '',
-         created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+        id: `temp-${orden}`, workspace_id: workspaceId,
+        orden, estado: 'PENDIENTE', cliente: 'Buscando en TOA...', rut: '—', fibra: '—',
+        fecha_emision: '—', fecha_agenda: '—', bloque: '—', ventana: '—', tecnico: '—', obs: '', telefono: '', direccion: '',
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       }
       setLocalPlaceholders(prev => [placeholder, ...prev])
     }
@@ -155,7 +157,7 @@ export default function VentasPage() {
         body: JSON.stringify({ orden }),
       })
       const data = await res.json()
-      
+
       if (res.ok && data.ok && data.datos) {
         const d = data.datos;
         const noEncontrada = d.estado === 'No encontrada';
@@ -195,8 +197,8 @@ export default function VentasPage() {
     }
   }
 
-  const upd = async (o: string) => { 
-    setUpdating(o); 
+  const upd = async (o: string) => {
+    setUpdating(o);
     try {
       // Llamar al proxy server-side (evita Mixed Content HTTPS→HTTP)
       const res = await fetch('/api/toa/consultar', {
@@ -241,6 +243,21 @@ export default function VentasPage() {
       await upd(o)
     }
     setUpdatingAll(false)
+  }
+
+  const handleDelete = async (v: VentaTOA) => {
+    if (!workspaceId || !v.id) return
+    if (confirm(`¿Estás seguro de que deseas eliminar la orden #${v.orden}?`)) {
+      setDeleting(v.id)
+      try {
+        await deleteVenta.mutateAsync({ id: v.id, workspaceId })
+      } catch (e) {
+        console.error('Error al eliminar:', e)
+        alert('Hubo un error al intentar eliminar la venta.')
+      } finally {
+        setDeleting(null)
+      }
+    }
   }
 
   // Importar Excel con columna de órdenes
@@ -292,17 +309,17 @@ export default function VentasPage() {
       // Create contact if needed, then send message
       let phone = v.telefono.replace(/\D/g, '')
       if (!phone.startsWith('569')) phone = `569${phone}` // Basic CL normalization, adjust if needed
-      
+
       // Upsert contact so we can log the message
       const { data: contact } = await supabase
         .from('contacts')
         .upsert({ workspace_id: workspaceId, phone, name: v.cliente }, { onConflict: 'workspace_id, phone' })
         .select('id')
         .single()
-        
+
       if (!contact) throw new Error('Could not create contact')
 
-      const bodyMsg = type === 'notify' ? 
+      const bodyMsg = type === 'notify' ?
         `Hola ${v.cliente}, te escribimos para confirmar tu instalación de ${v.fibra} agendada para el ${v.fecha_agenda} en el bloque ${v.bloque}.` :
         `Hola ${v.cliente}, notamos que tu orden de instalación no pudo ser realizada. Te contactamos para reagendar a la brevedad posible.`
 
@@ -310,10 +327,10 @@ export default function VentasPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-           workspaceId,
-           contactId: contact.id,
-           body: bodyMsg,
-           preview_url: false
+          workspaceId,
+          contactId: contact.id,
+          body: bodyMsg,
+          preview_url: false
         })
       })
       const data = await res.json()
@@ -331,20 +348,20 @@ export default function VentasPage() {
   }
 
   const LEYENDA = [
-    { icon: Eye,           color: 'text-sky-400 bg-sky-500/10',     label: 'Ver TOA' },
-    { icon: RefreshCw,     color: 'text-emerald-400 bg-emerald-500/10', label: 'Actualizar TOA' },
-    { icon: Send,          color: 'text-violet-400 bg-violet-500/10', label: 'Notificar cliente' },
+    { icon: Eye, color: 'text-sky-400 bg-sky-500/10', label: 'Ver TOA' },
+    { icon: RefreshCw, color: 'text-emerald-400 bg-emerald-500/10', label: 'Actualizar TOA' },
+    { icon: Send, color: 'text-violet-400 bg-violet-500/10', label: 'Notificar cliente' },
     { icon: CalendarClock, color: 'text-amber-400 bg-amber-500/10', label: 'Reagendar (BA)' },
-    { icon: Mail,          color: 'text-teal-400 bg-teal-500/10',   label: 'Enviar venta (BI)' },
+    { icon: Mail, color: 'text-teal-400 bg-teal-500/10', label: 'Enviar venta (BI)' },
   ]
 
   // KPIs
   const kpis = [
-    { l: 'Total',          v: displayVentas.length.toString(), c: '#fff' },
-    { l: 'Agendadas',      v: displayVentas.filter(v => v.estado === 'AGENDADA').length.toString(),     c: '#38bdf8' },
-    { l: 'Completadas',    v: displayVentas.filter(v => v.estado === 'COMPLETADA').length.toString(),   c: '#10b981' },
-    { l: 'No Realizadas',  v: displayVentas.filter(v => v.estado === 'NO REALIZADA').length.toString(), c: '#f43f5e' },
-    { l: 'Pendientes',     v: displayVentas.filter(v => v.estado === 'PENDIENTE').length.toString(),    c: '#64748b' },
+    { l: 'Total', v: displayVentas.length.toString(), c: '#fff' },
+    { l: 'Agendadas', v: displayVentas.filter(v => v.estado === 'AGENDADA').length.toString(), c: '#38bdf8' },
+    { l: 'Completadas', v: displayVentas.filter(v => v.estado === 'COMPLETADA').length.toString(), c: '#10b981' },
+    { l: 'No Realizadas', v: displayVentas.filter(v => v.estado === 'NO REALIZADA').length.toString(), c: '#f43f5e' },
+    { l: 'Pendientes', v: displayVentas.filter(v => v.estado === 'PENDIENTE').length.toString(), c: '#64748b' },
   ]
 
   return (
@@ -420,8 +437,8 @@ export default function VentasPage() {
                 <tr key={v.orden + v.rut} className="border-b transition-colors hover:bg-white/[0.02]" style={{ borderColor: '#0F1219' }}>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2">
-                       <span className="text-emerald-500 font-mono font-bold text-xs">#{v.orden}</span>
-                       {loadingOrders.has(v.orden) && <RefreshCw className="animate-spin text-emerald-400" style={{ width: 12, height: 12 }} />}
+                      <span className="text-emerald-500 font-mono font-bold text-xs">#{v.orden}</span>
+                      {loadingOrders.has(v.orden) && <RefreshCw className="animate-spin text-emerald-400" style={{ width: 12, height: 12 }} />}
                     </div>
                   </td>
                   <td className="px-3 py-3">
@@ -446,6 +463,7 @@ export default function VentasPage() {
                       <button onClick={() => handleNotify(v, 'notify')} title="Notificar cliente" className="p-1.5 rounded-lg transition-colors bg-violet-500/10 text-violet-400 hover:bg-violet-500/20"><Send style={{ width: 12, height: 12 }} /></button>
                       {v.estado === 'NO REALIZADA' && <button onClick={() => handleNotify(v, 'reschedule')} title="Reagendar BA" className="p-1.5 rounded-lg transition-colors bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"><CalendarClock style={{ width: 12, height: 12 }} /></button>}
                       {v.orden !== '—' && <button title="Enviar venta al BI" className="p-1.5 rounded-lg transition-colors bg-teal-500/10 text-teal-400 hover:bg-teal-500/20"><Mail style={{ width: 12, height: 12 }} /></button>}
+                      <button onClick={() => handleDelete(v)} title="Eliminar" disabled={deleting === v.id} className="p-1.5 rounded-lg transition-colors bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 disabled:opacity-50"><Trash2 style={{ width: 12, height: 12 }} className={deleting === v.id ? 'animate-pulse' : ''} /></button>
                     </div>
                   </td>
                 </tr>
@@ -486,14 +504,14 @@ export default function VentasPage() {
             </div>
             <div className="p-4 border-t flex gap-2.5" style={{ borderColor: '#141928' }}>
               {sel.estado === 'NO REALIZADA' && (
-                <button 
+                <button
                   onClick={() => handleNotify(sel, 'reschedule')}
                   disabled={sendingMsg}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold border transition-colors hover:bg-amber-500/15 disabled:opacity-50" style={{ background: '#0C0F1A', borderColor: '#f59e0b30', color: '#fbbf24' }}>
                   <CalendarClock style={{ width: 13, height: 13 }} /> Reagendar BA
                 </button>
               )}
-              <button 
+              <button
                 onClick={() => handleNotify(sel, 'notify')}
                 disabled={sendingMsg}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold border transition-colors hover:bg-emerald-500/15 disabled:opacity-50" style={{ background: '#0C0F1A', borderColor: '#10b98130', color: '#10b981' }}>

@@ -74,3 +74,24 @@ export function useUpsertVenta() {
     },
   })
 }
+
+export function useDeleteVenta() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { id: string; workspaceId: string }) => {
+      if (!args.id || !args.workspaceId) throw new Error('Faltan campos requeridos')
+
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('ventas_toa')
+        .delete()
+        .eq('id', args.id)
+        .eq('workspace_id', args.workspaceId)
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ventas_toa'] })
+    },
+  })
+}
