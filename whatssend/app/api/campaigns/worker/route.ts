@@ -58,7 +58,7 @@ async function processContact(campaignContactId: string, campaignId: string): Pr
   // 1. Obtener campaign_contact con contacto y campaña
   const { data: cc, error: ccError } = await supabase
     .from('campaign_contacts')
-    .select('id, contact_id, status, contacts(phone, name), campaigns(message_body, workspace_id, workspaces(evolution_instance))')
+    .select('id, contact_id, status, contacts(phone, name), campaigns(message_body, workspace_id, workspaces(evolution_instance, ultramsg_instance_id, ultramsg_token, owner_id))')
     .eq('id', campaignContactId)
     .single()
 
@@ -77,7 +77,7 @@ async function processContact(campaignContactId: string, campaignId: string): Pr
   const campaign = cc.campaigns as unknown as {
     message_body: string
     workspace_id: string
-    workspaces: { evolution_instance: string } | { evolution_instance: string }[]
+    workspaces: { evolution_instance: string; ultramsg_instance_id: string | null; ultramsg_token: string | null; owner_id: string } | { evolution_instance: string; ultramsg_instance_id: string | null; ultramsg_token: string | null; owner_id: string }[]
   }
 
   const workspace = Array.isArray(campaign.workspaces) ? campaign.workspaces[0] : campaign.workspaces
@@ -87,10 +87,6 @@ async function processContact(campaignContactId: string, campaignId: string): Pr
     return NextResponse.json({ failed: true, reason: 'no phone' })
   }
 
-  if (!workspace?.evolution_instance) {
-    return NextResponse.json({ error: 'Evolution API no configurado' }, { status: 400 })
-  }
-
   // 2. Personalizar mensaje
   let messageBody = campaign.message_body || ''
   messageBody = messageBody.replace(/\{\{nombre\}\}/gi, contact.name || '')
@@ -98,11 +94,7 @@ async function processContact(campaignContactId: string, campaignId: string): Pr
   messageBody = messageBody.replace(/\{\{telefono\}\}/gi, contact.phone || '')
   messageBody = messageBody.replace(/\{\{phone\}\}/gi, contact.phone || '')
 
-  // 3. Enviar mensaje
-  const { createEvolutionClient } = await import('@/lib/whatsapp/evolution')
-  const evolution = createEvolutionClient(null, null, workspace.evolution_instance)
-  
-  // Normalize phone (Evolution requires no +, no spaces)
+  // Normalize phone
   let cleanPhone = contact.phone.replace(/\D/g, '')
   
   // Format Chilean numbers specifically: if starts with 56 and length is 10, add a '9'
@@ -110,7 +102,30 @@ async function processContact(campaignContactId: string, campaignId: string): Pr
     cleanPhone = '569' + cleanPhone.slice(2)
   }
 
-  const result = await evolution.sendMessage(cleanPhone, messageBody)
+  // 3. Determinar si es usuario legacy (UltraMsg) consultando el email del owner
+  let isLegacyUser = false
+  if (workspace?.owner_id) {
+    const { data: { user: ownerUser } } = await supabase.auth.admin.getUserById(workspace.owner_id)
+    isLegacyUser = ownerUser?.email?.toLowerCase() === 'erml1903@hotmail.com'
+  }
+
+  // 4. Enviar mensaje por la pasarela correspondiente
+  let result: { ok: true; data: any } | { ok: false; error: string }
+
+  if (isLegacyUser && workspace?.ultramsg_instance_id && workspace?.ultramsg_token) {
+    // Enviar por UltraMsg
+    const { createUltraMsgClient } = await import('@/lib/ultramsg/client')
+    const ultramsg = createUltraMsgClient(workspace.ultramsg_instance_id, workspace.ultramsg_token)
+    result = await ultramsg.sendMessage(cleanPhone, messageBody)
+  } else if (workspace?.evolution_instance) {
+    // Enviar vía Evolution API (Default)
+    const { createEvolutionClient } = await import('@/lib/whatsapp/evolution')
+    const evolution = createEvolutionClient(null, null, workspace.evolution_instance)
+    result = await evolution.sendMessage(cleanPhone, messageBody)
+  } else {
+    await supabase.from('campaign_contacts').update({ status: 'failed', error_message: 'No hay pasarela configurada' }).eq('id', cc.id)
+    return NextResponse.json({ error: 'No hay pasarela de WhatsApp configurada' }, { status: 400 })
+  }
 
   if (result.ok) {
     await supabase.from('campaign_contacts')

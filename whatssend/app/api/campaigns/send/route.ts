@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     // 1. Obtener campaña y verificar ownership
     const { data: campaign, error: campError } = await supabase
       .from('campaigns')
-      .select('*, workspaces!inner(owner_id, evolution_instance)')
+      .select('*, workspaces!inner(owner_id, evolution_instance, ultramsg_instance_id, ultramsg_token)')
       .eq('id', campaignId)
       .single()
 
@@ -41,15 +41,20 @@ export async function POST(request: NextRequest) {
     const workspace = (Array.isArray(rawWorkspace) ? rawWorkspace[0] : rawWorkspace) as {
       owner_id: string
       evolution_instance: string | null
+      ultramsg_instance_id: string | null
+      ultramsg_token: string | null
     } | null
 
     if (!workspace || workspace.owner_id !== user.id) {
       return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
     }
 
-    if (!workspace.evolution_instance?.trim()) {
+    const isLegacyUser = user.email?.toLowerCase() === 'erml1903@hotmail.com'
+    const hasUltraMsg = isLegacyUser && !!workspace.ultramsg_instance_id && !!workspace.ultramsg_token
+
+    if (!hasUltraMsg && !workspace.evolution_instance?.trim()) {
       return NextResponse.json(
-        { error: 'Configura tus credenciales de Evolution API en Ajustes antes de enviar campañas.' },
+        { error: 'Configura tus credenciales de WhatsApp en Ajustes antes de enviar campañas.' },
         { status: 400 }
       )
     }
@@ -113,8 +118,6 @@ export async function POST(request: NextRequest) {
 
     // ── MODO DESARROLLO: loop síncrono (fallback sin QStash) ─────────────────
     console.log('[Campaign Send] Modo dev — loop síncrono (sin QStash)')
-    const { createEvolutionClient } = await import('@/lib/whatsapp/evolution')
-    const evolution = createEvolutionClient(null, null, workspace.evolution_instance!)
 
     let sentCount = 0
     let failedCount = 0
@@ -131,7 +134,20 @@ export async function POST(request: NextRequest) {
       messageBody = messageBody.replace(/\{\{phone\}\}/gi, contact.phone || '')
 
       const cleanPhone = contact.phone.replace(/\D/g, '')
-      const result = await evolution.sendMessage(cleanPhone, messageBody)
+
+      let result: { ok: true; data: any } | { ok: false; error: string }
+
+      if (hasUltraMsg) {
+        // Enviar por UltraMsg
+        const { createUltraMsgClient } = await import('@/lib/ultramsg/client')
+        const ultramsg = createUltraMsgClient(workspace.ultramsg_instance_id, workspace.ultramsg_token)
+        result = await ultramsg.sendMessage(cleanPhone, messageBody)
+      } else {
+        // Enviar vía Evolution API (Default)
+        const { createEvolutionClient } = await import('@/lib/whatsapp/evolution')
+        const evolution = createEvolutionClient(null, null, workspace.evolution_instance!)
+        result = await evolution.sendMessage(cleanPhone, messageBody)
+      }
 
       if (result.ok) {
         await supabase.from('campaign_contacts')
