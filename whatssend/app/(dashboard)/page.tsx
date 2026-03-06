@@ -97,43 +97,66 @@ export default function DashboardPage() {
     day: 'numeric'
   })
 
-  // Real sales status data
-  const countState = (state: string) => ventas.filter((v: any) => v?.estado?.toUpperCase()?.trim() === state).length;
-  const totalVentas = ventas.length || 1; // prevent div 0
-  const salesStatus = [
-    { label: 'Agendada', count: countState('AGENDADA'), color: '#38bdf8', pct: (countState('AGENDADA') / totalVentas) * 100 },
-    { label: 'En Proceso', count: countState('EN PROCESO'), color: '#fbbf24', pct: (countState('EN PROCESO') / totalVentas) * 100 },
-    { label: 'Completada', count: countState('COMPLETADA'), color: '#10b981', pct: (countState('COMPLETADA') / totalVentas) * 100 },
-    { label: 'No Realizada', count: countState('NO REALIZADA'), color: '#f43f5e', pct: (countState('NO REALIZADA') / totalVentas) * 100 },
-    { label: 'Pendiente', count: countState('PENDIENTE'), color: '#64748b', pct: (countState('PENDIENTE') / totalVentas) * 100 },
-  ]
+  // Sales status from real pipeline_leads data
+  const SALES_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+    interested: { label: 'Interesado', color: '#fbbf24' },
+    verifying: { label: 'Verificando', color: '#38bdf8' },
+    data_complete: { label: 'Datos Completos', color: '#10b981' },
+    sent: { label: 'Enviada', color: '#a78bfa' },
+    ingested: { label: 'Ingresada', color: '#06b6d4' },
+    rejected: { label: 'No Ingresada', color: '#f43f5e' },
+  }
 
-  // Real alerts based on sales and messages
+  const salesByStatus = analytics?.salesByStatus ?? []
+  const totalPipelineLeads = salesByStatus.reduce((sum, s) => sum + s.count, 0)
+
+  const salesStatus = Object.entries(SALES_STATUS_CONFIG).map(([key, cfg]) => {
+    const found = salesByStatus.find(s => s.status === key)
+    const count = found?.count ?? 0
+    return {
+      label: cfg.label,
+      count,
+      color: cfg.color,
+      pct: totalPipelineLeads > 0 ? Math.round((count / totalPipelineLeads) * 100) : 0,
+    }
+  }).filter(s => s.count > 0 || ['interested', 'verifying', 'data_complete', 'sent'].includes(
+    Object.keys(SALES_STATUS_CONFIG).find(k => SALES_STATUS_CONFIG[k].label === s.label) || ''
+  ))
+
+  // Alerts from real data
+  const unanswered = analytics?.unansweredContacts ?? []
+  const totalUnanswered = unanswered.reduce((sum, u) => sum + u.count, 0)
+
   const alerts: { color: string; title: string; desc: string; action: string }[] = []
 
-  // No Realizadas
-  const noRealizadas = ventas.filter((v: any) => v?.estado?.toUpperCase()?.trim() === 'NO REALIZADA')
-  noRealizadas.forEach((v: any) => {
+  if ((analytics?.totalNoRealizadas ?? 0) > 0) {
     alerts.push({
       color: '#f43f5e',
-      title: `${v.cliente || 'Desconocido'} — No Realizada`,
-      desc: (v.obs || 'Requiere atención').slice(0, 100),
-      action: '/ventas'
-    })
-  })
-
-  // Unread messages
-  const unreadConvs = conversations.filter((c: any) => c.unread_count > 0)
-  if (unreadConvs.length > 0) {
-    const totalUnread = unreadConvs.reduce((acc: number, c: any) => acc + c.unread_count, 0)
-    const names = unreadConvs.map((c: any) => `${c.contact_name || c.contact_phone} (${c.unread_count})`).join(', ')
-    alerts.push({
-      color: '#38bdf8',
-      title: `${totalUnread} mensaje${totalUnread !== 1 ? 's' : ''} sin responder`,
-      desc: `${names} · Bandeja de entrada`,
-      action: '/inbox'
+      title: `${analytics?.totalNoRealizadas} venta${(analytics?.totalNoRealizadas ?? 0) > 1 ? 's' : ''} no ingresada${(analytics?.totalNoRealizadas ?? 0) > 1 ? 's' : ''}`,
+      desc: 'Requieren revisión en el pipeline',
+      action: '/pipeline',
     })
   }
+
+  if (totalUnanswered > 0) {
+    alerts.push({
+      color: '#38bdf8',
+      title: `${totalUnanswered} mensaje${totalUnanswered > 1 ? 's' : ''} sin responder`,
+      desc: `${unanswered.length} contacto${unanswered.length > 1 ? 's' : ''} esperando respuesta`,
+      action: '/inbox',
+    })
+  }
+
+  if ((analytics?.totalActiveSales ?? 0) > 0) {
+    alerts.push({
+      color: '#10b981',
+      title: `${analytics?.totalActiveSales} venta${(analytics?.totalActiveSales ?? 0) > 1 ? 's' : ''} activa${(analytics?.totalActiveSales ?? 0) > 1 ? 's' : ''}`,
+      desc: 'En seguimiento en el pipeline',
+      action: '/pipeline',
+    })
+  }
+
+  const salesTrend = analytics?.salesTrendWeek ?? 0
 
   return (
     <div className="p-6 h-full overflow-auto space-y-5">
@@ -151,11 +174,11 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           title="Ventas en Seguimiento"
-          value={analytics?.totalCampaigns ?? 0}
+          value={analytics?.totalActiveSales ?? 0}
           sub="órdenes activas"
           icon={Activity}
           accent="#10b981"
-          trend="+2 esta semana"
+          trend={salesTrend > 0 ? `+${salesTrend} esta semana` : undefined}
           loading={loading}
         />
         <StatCard
@@ -176,7 +199,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="No Realizadas"
-          value={countState('NO REALIZADA')}
+          value={analytics?.totalNoRealizadas ?? 0}
           sub="requieren atención"
           icon={AlertTriangle}
           accent="#f43f5e"
@@ -194,16 +217,20 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <span className="text-white font-semibold text-xs">Estado de Ventas</span>
             <button
-              onClick={() => router.push('/ventas')}
+              onClick={() => router.push('/pipeline')}
               className="text-xs text-emerald-500 hover:text-emerald-400 flex items-center gap-0.5 transition-colors"
             >
               Ver todo <ChevronRight style={{ width: 12, height: 12 }} />
             </button>
           </div>
           <div className="space-y-3">
-            {salesStatus.map((s) => (
-              <StatusBar key={s.label} {...s} />
-            ))}
+            {salesStatus.length > 0 ? (
+              salesStatus.map((s) => (
+                <StatusBar key={s.label} {...s} />
+              ))
+            ) : (
+              <p className="text-[#475569] text-xs text-center py-4">Sin ventas registradas</p>
+            )}
           </div>
         </div>
 
@@ -214,35 +241,41 @@ export default function DashboardPage() {
         >
           <div className="flex items-center justify-between mb-4">
             <span className="text-white font-semibold text-xs">Requieren Atención</span>
-            <span
-              className="text-xs px-2 py-0.5 rounded-full font-medium"
-              style={{ background: '#f43f5e18', color: '#f43f5e', border: '1px solid #f43f5e20' }}
-            >
-              {alerts.length} alertas
-            </span>
+            {alerts.length > 0 && (
+              <span
+                className="text-xs px-2 py-0.5 rounded-full font-medium"
+                style={{ background: '#f43f5e18', color: '#f43f5e', border: '1px solid #f43f5e20' }}
+              >
+                {alerts.length} alerta{alerts.length > 1 ? 's' : ''}
+              </span>
+            )}
           </div>
           <div className="space-y-2.5">
-            {alerts.map((a, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-3 rounded-lg p-3 border group hover:border-white/10 cursor-pointer transition-all"
-                style={{ background: '#07090F', borderColor: '#141928' }}
-                onClick={() => router.push(a.action)}
-              >
+            {alerts.length > 0 ? (
+              alerts.map((a, i) => (
                 <div
-                  className="w-1 h-full min-h-[2rem] rounded-full flex-shrink-0 mt-0.5"
-                  style={{ background: a.color }}
-                />
-                <div className="flex-1">
-                  <p className="text-white text-xs font-semibold">{a.title}</p>
-                  <p className="text-[#475569] text-xs mt-0.5">{a.desc}</p>
+                  key={i}
+                  className="flex items-start gap-3 rounded-lg p-3 border group hover:border-white/10 cursor-pointer transition-all"
+                  style={{ background: '#07090F', borderColor: '#141928' }}
+                  onClick={() => router.push(a.action)}
+                >
+                  <div
+                    className="w-1 h-full min-h-[2rem] rounded-full flex-shrink-0 mt-0.5"
+                    style={{ background: a.color }}
+                  />
+                  <div className="flex-1">
+                    <p className="text-white text-xs font-semibold">{a.title}</p>
+                    <p className="text-[#475569] text-xs mt-0.5">{a.desc}</p>
+                  </div>
+                  <ArrowUpRight
+                    style={{ width: 14, height: 14 }}
+                    className="text-[#334155] group-hover:text-[#94A3B8] transition-colors flex-shrink-0 mt-0.5"
+                  />
                 </div>
-                <ArrowUpRight
-                  style={{ width: 14, height: 14 }}
-                  className="text-[#334155] group-hover:text-[#94A3B8] transition-colors flex-shrink-0 mt-0.5"
-                />
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-[#475569] text-xs text-center py-4">Todo en orden 👍</p>
+            )}
           </div>
         </div>
       </div>

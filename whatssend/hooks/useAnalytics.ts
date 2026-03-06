@@ -13,6 +13,12 @@ export interface AnalyticsData {
   contactsByStatus: { status: string; count: number }[]
   messagesByDay: { date: string; inbound: number; outbound: number }[]
   contactGrowth: { date: string; count: number }[]
+  // Dashboard real data
+  salesByStatus: { status: string; count: number }[]
+  totalActiveSales: number
+  salesTrendWeek: number
+  unansweredContacts: { contactId: string; name: string; count: number }[]
+  totalNoRealizadas: number
 }
 
 const EMPTY_ANALYTICS: AnalyticsData = {
@@ -25,6 +31,11 @@ const EMPTY_ANALYTICS: AnalyticsData = {
   contactsByStatus: [],
   messagesByDay: [],
   contactGrowth: [],
+  salesByStatus: [],
+  totalActiveSales: 0,
+  salesTrendWeek: 0,
+  unansweredContacts: [],
+  totalNoRealizadas: 0,
 }
 
 async function safeQuery<T>(
@@ -48,12 +59,12 @@ export function useAnalytics(workspaceId: string | null) {
       const supabase = createClient()
 
       // Parallel queries with individual error handling
-      const [contactsRaw, messagesRaw, campaignsRaw, botRulesRaw] = await Promise.all([
+      const [contactsRaw, messagesRaw, campaignsRaw, botRulesRaw, pipelineRaw, pipelineWeekRaw] = await Promise.all([
         safeQuery(() =>
           supabase.from('contacts').select('id, status, created_at').eq('workspace_id', workspaceId)
         ),
         safeQuery(() =>
-          supabase.from('messages').select('id, direction, created_at').eq('workspace_id', workspaceId)
+          supabase.from('messages').select('id, direction, created_at, contact_id').eq('workspace_id', workspaceId)
         ),
         safeQuery(() =>
           supabase.from('campaigns').select('id').eq('workspace_id', workspaceId)
@@ -61,12 +72,22 @@ export function useAnalytics(workspaceId: string | null) {
         safeQuery(() =>
           supabase.from('bot_rules').select('id, is_active').eq('workspace_id', workspaceId)
         ),
+        safeQuery(() =>
+          supabase.from('pipeline_leads').select('id, status, created_at').eq('workspace_id', workspaceId)
+        ),
+        safeQuery(() => {
+          const weekAgo = new Date()
+          weekAgo.setDate(weekAgo.getDate() - 7)
+          return supabase.from('pipeline_leads').select('id').eq('workspace_id', workspaceId).gte('created_at', weekAgo.toISOString())
+        }),
       ])
 
       const contacts = (contactsRaw || []) as { id: string; status: string; created_at: string }[]
-      const messages = (messagesRaw || []) as { id: string; direction: string; created_at: string }[]
+      const messages = (messagesRaw || []) as { id: string; direction: string; created_at: string; contact_id: string }[]
       const campaigns = (campaignsRaw || []) as { id: string }[]
       const botRules = (botRulesRaw || []) as { id: string; is_active: boolean }[]
+      const pipelineLeads = (pipelineRaw || []) as { id: string; status: string; created_at: string }[]
+      const pipelineWeek = (pipelineWeekRaw || []) as { id: string }[]
 
       // Contacts by status
       const statusCounts: Record<string, number> = {}
@@ -115,6 +136,36 @@ export function useAnalytics(workspaceId: string | null) {
       const inbound = messages.filter((m) => m.direction === 'inbound').length
       const outbound = messages.filter((m) => m.direction === 'outbound').length
 
+      // Pipeline leads by status
+      const salesStatusCounts: Record<string, number> = {}
+      pipelineLeads.forEach((l) => {
+        const s = l.status || 'interested'
+        salesStatusCounts[s] = (salesStatusCounts[s] || 0) + 1
+      })
+      const salesByStatus = Object.entries(salesStatusCounts).map(([status, count]) => ({ status, count }))
+      const totalNoRealizadas = salesStatusCounts['rejected'] || 0
+      const totalActiveSales = pipelineLeads.filter(l => !['rejected', 'ingested'].includes(l.status)).length
+
+      // Unanswered contacts: contacts with last message inbound (no outbound reply after)
+      const contactLastMsg: Record<string, { direction: string; created_at: string }> = {}
+      messages.forEach((m) => {
+        const existing = contactLastMsg[m.contact_id]
+        if (!existing || m.created_at > existing.created_at) {
+          contactLastMsg[m.contact_id] = { direction: m.direction, created_at: m.created_at }
+        }
+      })
+      // Count inbound messages per contact that don't have a more recent outbound
+      const unansweredMap: Record<string, number> = {}
+      Object.entries(contactLastMsg).forEach(([contactId, last]) => {
+        if (last.direction === 'inbound') {
+          unansweredMap[contactId] = (unansweredMap[contactId] || 0) + 1
+        }
+      })
+      const unansweredContacts = Object.entries(unansweredMap).map(([contactId, count]) => {
+        const contact = contacts.find(c => c.id === contactId)
+        return { contactId, name: contactId.substring(0, 8), count }
+      }).slice(0, 5)
+
       return {
         totalContacts: contacts.length,
         totalMessages: messages.length,
@@ -125,6 +176,11 @@ export function useAnalytics(workspaceId: string | null) {
         contactsByStatus,
         messagesByDay,
         contactGrowth,
+        salesByStatus,
+        totalActiveSales,
+        salesTrendWeek: pipelineWeek.length,
+        unansweredContacts,
+        totalNoRealizadas,
       }
     },
     enabled: !!workspaceId,
